@@ -1,0 +1,68 @@
+# .github/workflows/ci.yml
+# Bu dosya, proje kök dizinindeki .github/workflows klasöründe olmalıdır.
+
+name: Dernek ERP CI/CD Pipeline
+
+# İş Akışının Ne Zaman Çalışacağını Tanımla
+on:
+  push:
+    # main ve develop branch'lerine yapılan her push'ta çalıştır
+    branches: [ main, develop ]
+  pull_request:
+    # main ve develop'a gelen her Pull Request'te (PR) çalıştır
+    branches: [ main, develop ]
+
+jobs:
+  # ====================================================================
+  # AŞAMA 1: KOD KALİTESİ KONTROLÜ (CODE QUALITY)
+  # Bu aşama, kodu çalıştırmadan önce standartlara uygunluğunu kontrol eder.
+  # ====================================================================
+  code-quality:
+    runs-on: ubuntu-latest # İşlemi çalıştırmak için kullanılacak sanal makine (VM)
+    steps:
+    - name: Kodu Klonla
+      uses: actions/checkout@v4
+
+    - name: Python 3.11 Ortamını Kur
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip' # Bağımlılıkları önbelleğe alarak kurulumu hızlandır
+        
+    - name: Bağımlılıkları Kur
+      # requirements.txt dosyasındaki tüm araçlar (Black, Flake8, MyPy dahil) kurulur.
+      run: pip install -r requirements.txt
+      
+    - name: Black ile Kod Biçimini Kontrol Et
+      # --check ve --diff, Black'in sadece kontrol etmesini ve farklılıkları göstermesini sağlar.
+      run: black --check --diff app/
+      
+    - name: Flake8 ile Stil ve Sözdizimi Kontrolü
+      # Ayarları pyproject.toml'dan okur.
+      run: flake8 app/
+      
+    - name: MyPy ile Tip Kontrolü
+      # Ayarları pyproject.toml'dan okur.
+      run: mypy app/
+      
+  # ====================================================================
+  # AŞAMA 2: DOCKER İMAJI OLUŞTURMA (BUILD)
+  # Sadece kalite kontrol başarılıysa çalışır.
+  # ====================================================================
+  build-docker-image:
+    needs: code-quality # Bu satır KRİTİKTİR: Sadece önceki aşama başarılıysa devam et.
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Kodu Klonla
+        uses: actions/checkout@v4
+
+      - name: Docker İmajını Oluştur
+        # Kodun temiz olduğu onaylandı. Dockerfile'ı kullanarak imajı oluştur.
+        run: |
+          docker build . \
+            --file Dockerfile \
+            --tag dernek-erp-backend:latest
+          
+      - name: Başarı Mesajı
+        run: echo "Kod Kalitesi Kontrol Edildi ve Docker İmajı Başarıyla Oluşturuldu!"
