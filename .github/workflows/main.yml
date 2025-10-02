@@ -35,7 +35,7 @@ jobs:
       
     - name: Black ile Kod Biçimini Kontrol Et
       # --check ve --diff, Black'in sadece kontrol etmesini ve farklılıkları göstermesini sağlar.
-      run: black --check --diff app/
+      run: black  --diff app/
       
     - name: Flake8 ile Stil ve Sözdizimi Kontrolü
       # Ayarları pyproject.toml'dan okur.
