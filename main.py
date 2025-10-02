@@ -18,4 +18,4 @@ app = FastAPI(
 
 @app.get("/")
 def say_hello():
-    return {"message":"Dernek ERP test."}
+    return {"message":"dernek erp CI/CD testi"}
