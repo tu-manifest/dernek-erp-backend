@@ -1,0 +1,11 @@
+
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic>=2.0.0
+pydantic-settings  # <-- Bu satırın kesinlikle olmalıdır!
+
+# Geliştirme Araçları (Kod kalitesini Docker'da da kontrol etmek için)
+black
+flake8
+mypy

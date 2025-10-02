@@ -1,0 +1,80 @@
+# pyproject.toml
+
+# ==============================================================================
+# [project] Bölümü: Proje Meta Verileri ve Çalışma Bağımlılıkları (Runtime)
+# = Bu paketler uygulamanın çalışması için gereklidir (Canlı ortamda kurulur).
+# ==============================================================================
+[project]
+name = "dernek-erp-backend"
+version = "0.1.0"
+description = "1 Milyon Üyeli Dernek ERP Backend Servisi"
+authors = [
+    {name = "Sizin Adınız", email = "email@example.com"},
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11" # Python 3.11 veya üzeri şart koşuluyor
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2.0.0",
+    "pydantic-settings",
+    "python-dotenv",
+    # İleride eklenecekler:
+    # "SQLAlchemy", 
+    # "psycopg2-binary", # PostgreSQL veritabanı sürücüsü
+]
+
+
+# ==============================================================================
+# [tool.setuptools] Bölümü: Paket Oluşturma Ayarları (opsiyonel ama iyi)
+# ==============================================================================
+[tool.setuptools]
+packages = ["app"] # Sadece 'app' klasörünü Python paketi olarak tanı.
+
+
+# ==============================================================================
+# [tool.black] Bölümü: Kod Biçimlendirici (Formatter) Ayarları
+# = Kodun otomatik olarak belirli bir stile göre düzenlenmesini sağlar.
+# ==============================================================================
+[tool.black]
+line-length = 88 # Satır uzunluğunu 88 karakterde tutar (PEP 8 standardı)
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | \.mypy_cache
+  | migrations
+)/
+'''
+
+
+# ==============================================================================
+# [tool.mypy] Bölümü: Tip Kontrolcüsü (Type Checker) Ayarları
+# = Tip uyumsuzluklarını kod çalışmadan önce yakalar.
+# ==============================================================================
+[tool.mypy]
+# Projemizdeki tüm modüller için katı tip kontrolünü etkinleştir
+strict = true 
+# Harici kütüphanelerde tip bilgisi eksikse hata verme
+ignore_missing_imports = true
+# Geliştirme kolaylığı için strict=true yerine bu ikisini açabilirsiniz:
+# disallow_untyped_defs = true  # Tüm fonksiyonların tip belirtmesi zorunlu olsun
+# warn_unused_ignores = true
+
+
+# ==============================================================================
+# [tool.flake8] Bölümü: Kod Denetleyicisi (Linter) Ayarları
+# = Python kodlama standartlarına (PEP 8) uyumu kontrol eder.
+# ==============================================================================
+[tool.flake8]
+max-line-length = 88 # Black ile aynı satır uzunluğu
+# Yoksayılacak hata kodları:
+# E203: Black ile çakışır, yoksayılır.
+# W503: Black ile çakışır, yoksayılır.
+# D100, D101 vb.: Docstring (açıklama) kurallarını şimdilik yoksayıyoruz.
+ignore = ["E203", "W503", "D"] 
+exclude = [".venv", ".git", "__pycache__", "migrations"]
