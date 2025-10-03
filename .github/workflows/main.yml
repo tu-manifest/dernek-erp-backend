@@ -9,7 +9,7 @@ on:
     - cron: '0 0 * * 0'  # Haftalık security scan
 
 permissions:
-  contents: write  # Auto-commit için write izni gerekiyor
+  contents: write  # Auto-commit için write izni
   packages: write
   id-token: write
 
@@ -24,7 +24,7 @@ jobs:
       - name: Python Ortamını Kur
         uses: actions/setup-python@v5.2.0
         with:
-          python-version: '3.11'  # Sadece 3.11 kullanıyoruz
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Bağımlılıkları Kur
@@ -33,13 +33,13 @@ jobs:
       - name: Black ile Otomatik Formatlama
         run: |
           pip install black
-          black .  # --check yerine doğrudan formatlama yapar
+          black .
 
       - name: Flake8 ile Kod Stili Kontrolü (Opsiyonel)
         run: |
           pip install flake8
-          flake8 . --max-line-length=88 --extend-ignore=E203  # Black ile uyumlu ayarlar
-        continue-on-error: true  # Flake8 hata verse bile devam et
+          flake8 . --max-line-length=88 --extend-ignore=E203
+        continue-on-error: true
 
       - name: Format Değişikliklerini Commit Et
         run: |
@@ -49,7 +49,8 @@ jobs:
           git commit -m "Auto-format with Black" || echo "No changes to commit"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Push için token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # AŞAMA 2: SECURITY SCAN
   security-scan:
     runs-on: ubuntu-latest
@@ -57,10 +58,18 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
-      - name: Dependency Scan (pip-audit)
+
+      - name: Python Ortamını Kur
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Dependency Scan (Safety)
         run: |
-          pip install pip-audit
-          pip-audit
+          pip install safety
+          safety check -r requirements.txt --full-report
+        continue-on-error: true  # Hata olsa bile devam et
 
   # AŞAMA 3: DOCKER BUILD VE PUSH
   build-and-push-docker:
