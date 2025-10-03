@@ -7,9 +7,9 @@
 [project]
 name = "dernek-erp-backend"
 version = "0.1.0"
-description = "1 Milyon Üyeli Dernek ERP Backend Servisi"
+description = "Dernek ERP Backend Servisi"
 authors = [
-    {name = "Sizin Adınız", email = "email@example.com"},
+    {name = "TÜ Manifest Grubu"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -70,11 +70,3 @@ ignore_missing_imports = true
 # [tool.flake8] Bölümü: Kod Denetleyicisi (Linter) Ayarları
 # = Python kodlama standartlarına (PEP 8) uyumu kontrol eder.
 # ==============================================================================
-[tool.flake8]
-max-line-length = 88 # Black ile aynı satır uzunluğu
-# Yoksayılacak hata kodları:
-# E203: Black ile çakışır, yoksayılır.
-# W503: Black ile çakışır, yoksayılır.
-# D100, D101 vb.: Docstring (açıklama) kurallarını şimdilik yoksayıyoruz.
-ignore = ["E203", "W503", "D", "E501", "E302", "E305"] 
-exclude = [".venv", ".git", "__pycache__", "migrations"]
