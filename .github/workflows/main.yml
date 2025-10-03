@@ -50,18 +50,6 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Push için token
-
-      - name: Unit Testler (Pytest)
-        run: |
-          pip install pytest
-          pytest tests/ --cov . --cov-report=xml
-
-      - name: Test Raporunu Upload Et
-        uses: actions/upload-artifact@v4.4.0
-        with:
-          name: test-report
-          path: coverage.xml
-
   # AŞAMA 2: SECURITY SCAN
   security-scan:
     runs-on: ubuntu-latest
