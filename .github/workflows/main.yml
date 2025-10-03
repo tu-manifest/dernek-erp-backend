@@ -51,6 +51,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
   # AŞAMA 2: SECURITY SCAN
   security-scan:
     runs-on: ubuntu-latest
@@ -95,13 +96,7 @@ jobs:
             type=ref,event=branch
             type=sha
 
-      - name: Docker Cache Kur
-        uses: actions/cache@v4.2.0  # Güncellendi: v4.1.1'den v4.2.0'a
-        with:
-          key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
-          path: /tmp/.buildx-cache
-
-      - name: Docker Build ve Push
+      - name: Docker Build ve Push (Inline Cache ile)
         uses: docker/build-push-action@v6.7.0
         with:
           context: .
@@ -109,5 +104,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          cache-from: type=gha  # GitHub Actions cache backend'i kullan
+          cache-to: type=gha,mode=max  # Max mode: Tüm layer'ları cache'le (export dahil)
