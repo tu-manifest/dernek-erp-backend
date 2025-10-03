@@ -1,73 +1,121 @@
 name: Dernek ERP CI/CD Pipeline
 
-# İş Akışının Ne Zaman Çalışacağını Tanımla
 on:
   push:
-    # main ve develop branch'lerine yapılan her push'ta çalıştır
     branches: [ main, develop ]
   pull_request:
-    # main ve develop'a gelen her Pull Request'te (PR) çalıştır
     branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Haftalık security scan
 
+permissions:
+  contents: read
+  packages: write
 jobs:
-  # ====================================================================
-  # AŞAMA 1: KOD KALİTESİ KONTROLÜ (CODE QUALITY)
-  # ====================================================================
+  # AŞAMA 1: KOD KALİTESİ KONTROLÜ
   code-quality:
     runs-on: ubuntu-latest
-    steps:
-    - name: Kodu Klonla
-      uses: actions/checkout@v4
-
-    - name: Python 3.11 Ortamını Kur
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-        cache: 'pip' 
-        
-    - name: Bağımlılıkları Kur
-      run: pip install -r requirements.txt
-  # ====================================================================
-  # AŞAMA 2: DOCKER İMAJINI OLUŞTUR, GHCR'YE GÖNDER VE RENDER'I TETİKLE
-  # ====================================================================
-  build-and-push-docker:
-    # Yalnızca code-quality aşaması BAŞARIYLA tamamlanırsa çalışır.
-    needs: code-quality 
-    runs-on: ubuntu-latest
-    
-    # GHCR'ye yazma izni CRİTİKTİR!
-    permissions:
-      contents: read
-      packages: write
-      
+    strategy:
+      matrix:
+        python-version: [ '3.10', '3.11', '3.12' ]  # Çoklu sürüm test
     steps:
       - name: Kodu Klonla
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.7  # Pin version for security
 
-      - name: Docker'a Giriş Yap (GHCR)
-        uses: docker/login-action@v3
+      - name: Python Ortamını Kur
+        uses: actions/setup-python@v5.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Bağımlılıkları Kur
+        run: pip install -r requirements.txt
+
+      - name: Linting Yap (Black & Flake8)
+        run: |
+          pip install black flake8
+          black --check .
+          flake8 .
+
+      - name: Type Checking (Mypy)
+        run: |
+          pip install mypy
+          mypy .
+
+      - name: Security Scan (Bandit)
+        run: |
+          pip install bandit
+          bandit -r .
+
+      - name: Unit Testler (Pytest)
+        run: |
+          pip install pytest
+          pytest tests/ --cov . --cov-report=xml  # Coverage raporu
+
+      - name: Test Raporunu Upload Et
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: test-report
+          path: coverage.xml
+
+  # AŞAMA 2: SECURITY SCAN (Ayrı Job)
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    if: github.event_name == 'schedule' || github.event_name == 'push'  # Haftalık veya push'ta
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - name: Dependency Scan (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit
+
+      - name: Docker Image Scan (Trivy)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: 'ghcr.io/${{ github.repository }}:latest'  # Önce build et, sonra scan
+
+  # AŞAMA 3: DOCKER BUILD VE PUSH
+  build-and-push-docker:
+    needs: [code-quality, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'  # Sadece main push'ta
+    steps:
+      - uses: actions/checkout@v4.1.7
+
+      - name: Docker Login (GHCR)
+        uses: docker/login-action@v3.3.0
         with:
           registry: ghcr.io
-          username: ${{ github.actor }} 
-          password: ${{ secrets.GITHUB_TOKEN }} 
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Metadata (Etiket) Oluşturma
+      - name: Metadata Oluştur
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v5.5.1
         with:
-          images: ghcr.io/${{ github.repository }} 
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha
 
-      - name: Docker İmajını Oluştur ve GHCR'ye Gönder
-        uses: docker/build-push-action@v5
+      - name: Docker Cache Kur
+        uses: actions/cache@v4.1.1
         with:
-          context: . 
+          key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
+          path: /tmp/.buildx-cache
+
+      - name: Docker Build ve Push (Multi-stage)
+        uses: docker/build-push-action@v6.7.0
+        with:
+          context: .
+          file: Dockerfile  # Multi-stage Dockerfile varsay
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          
-      - name: RENDER Dağıtımını Tetikle (Sürekli Dağıtım)
-        # Bu, imaj GHCR'ye gittikten sonra Render'a sinyal gönderir.
-        # Bu adımın çalışması için RENDER_DEPLOY_HOOK_URL sırrının GitHub'a eklenmiş olması gerekir.
-        run: |
-          echo "Render Dağıtımını Tetikliyor..."
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Render Dağıtımını Tetikle
+        run: curl -X POST -H "Authorization: Bearer ${{ secrets.RENDER_API_TOKEN }}" ${{ secrets.RENDER_DEPLOY_HOOK_URL }}  # Token ile güvenli hale getir
+
