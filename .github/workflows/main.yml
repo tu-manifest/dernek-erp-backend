@@ -51,6 +51,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Unit Testler (Pytest)
+        run: |
+          pip install pytest
+          pytest tests/ --cov . --cov-report=xml
+
+      - name: Test Raporunu Upload Et
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: test-report
+          path: coverage.xml
+
   # AŞAMA 2: SECURITY SCAN
   security-scan:
     runs-on: ubuntu-latest
@@ -69,7 +80,7 @@ jobs:
         run: |
           pip install safety
           safety check -r requirements.txt --full-report
-        continue-on-error: true  # Hata olsa bile devam et
+        continue-on-error: true
 
   # AŞAMA 3: DOCKER BUILD VE PUSH
   build-and-push-docker:
@@ -96,7 +107,7 @@ jobs:
             type=sha
 
       - name: Docker Cache Kur
-        uses: actions/cache@v4.1.1
+        uses: actions/cache@v4.2.0  # Güncellendi: v4.1.1'den v4.2.0'a
         with:
           key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
           path: /tmp/.buildx-cache
