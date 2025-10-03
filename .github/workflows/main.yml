@@ -1,6 +1,3 @@
-# .github/workflows/ci.yml
-# Bu dosya, proje kök dizinindeki .github/workflows klasöründe olmalıdır.
-
 name: Dernek ERP CI/CD Pipeline
 
 # İş Akışının Ne Zaman Çalışacağını Tanımla
@@ -15,10 +12,9 @@ on:
 jobs:
   # ====================================================================
   # AŞAMA 1: KOD KALİTESİ KONTROLÜ (CODE QUALITY)
-  # Bu aşama, kodu çalıştırmadan önce standartlara uygunluğunu kontrol eder.
   # ====================================================================
   code-quality:
-    runs-on: ubuntu-latest # İşlemi çalıştırmak için kullanılacak sanal makine (VM)
+    runs-on: ubuntu-latest
     steps:
     - name: Kodu Klonla
       uses: actions/checkout@v4
@@ -27,39 +23,61 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip' # Bağımlılıkları önbelleğe alarak kurulumu hızlandır
+        cache: 'pip' 
         
     - name: Bağımlılıkları Kur
-      # requirements.txt dosyasındaki tüm araçlar (Black, Flake8, MyPy dahil) kurulur.
       run: pip install -r requirements.txt
       
     - name: Black ile Kod Biçimini Kontrol Et
-      # --check ve --diff, Black'in sadece kontrol etmesini ve farklılıkları göstermesini sağlar.
-      run: black  --diff app/
+      run: black --check --diff app/
       
+    - name: Flake8 ile Stil ve Sözdizimi Kontrolü
+      run: flake8 app/
 
     - name: MyPy ile Tip Kontrolü
-      # Ayarları pyproject.toml'dan okur.
       run: mypy app/
       
   # ====================================================================
-  # AŞAMA 2: DOCKER İMAJI OLUŞTURMA (BUILD)
-  # Sadece kalite kontrol başarılıysa çalışır.
+  # AŞAMA 2: DOCKER İMAJINI OLUŞTUR, GHCR'YE GÖNDER VE RENDER'I TETİKLE
   # ====================================================================
-  build-docker-image:
-    needs: code-quality # Bu satır KRİTİKTİR: Sadece önceki aşama başarılıysa devam et.
+  build-and-push-docker:
+    # Yalnızca code-quality aşaması BAŞARIYLA tamamlanırsa çalışır.
+    needs: code-quality 
     runs-on: ubuntu-latest
     
+    # GHCR'ye yazma izni CRİTİKTİR!
+    permissions:
+      contents: read
+      packages: write
+      
     steps:
       - name: Kodu Klonla
         uses: actions/checkout@v4
 
-      - name: Docker İmajını Oluştur
-        # Kodun temiz olduğu onaylandı. Dockerfile'ı kullanarak imajı oluştur.
-        run: |
-          docker build . \
-            --file Dockerfile \
-            --tag dernek-erp-backend:latest
+      - name: Docker'a Giriş Yap (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }} 
+          password: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Metadata (Etiket) Oluşturma
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }} 
+
+      - name: Docker İmajını Oluştur ve GHCR'ye Gönder
+        uses: docker/build-push-action@v5
+        with:
+          context: . 
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           
-      - name: Başarı Mesajı
-        run: echo "Kod Kalitesi Kontrol Edildi ve Docker İmajı Başarıyla Oluşturuldu!"
+      - name: RENDER Dağıtımını Tetikle (Sürekli Dağıtım)
+        # Bu, imaj GHCR'ye gittikten sonra Render'a sinyal gönderir.
+        # Bu adımın çalışması için RENDER_DEPLOY_HOOK_URL sırrının GitHub'a eklenmiş olması gerekir.
+        run: |
+          echo "Render Dağıtımını Tetikliyor..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
