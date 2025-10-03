@@ -51,7 +51,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
   # AŞAMA 2: SECURITY SCAN
   security-scan:
     runs-on: ubuntu-latest
@@ -87,6 +86,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Buildx Kur
+        uses: docker/setup-buildx-action@v3.11.0
+        with:
+          driver: docker-container  # Cache export için uygun driver
+          install: true
+
       - name: Metadata Oluştur
         id: meta
         uses: docker/metadata-action@v5.5.1
@@ -104,5 +109,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha  # GitHub Actions cache backend'i kullan
-          cache-to: type=gha,mode=max  # Max mode: Tüm layer'ları cache'le (export dahil)
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
