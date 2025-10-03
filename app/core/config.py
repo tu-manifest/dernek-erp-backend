@@ -20,3 +20,16 @@ class Settings(BaseSettings):
 
 # Bu objeyi projenin her yerinde kullanacağız
 settings = Settings()
+
+
+
+
+
+
+
+
+
+
+
+
+

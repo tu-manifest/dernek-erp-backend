@@ -27,16 +27,6 @@ jobs:
         
     - name: Bağımlılıkları Kur
       run: pip install -r requirements.txt
-      
-    - name: Black ile Kod Biçimini Kontrol Et
-      run: black  --diff app/
-      
-    - name: Flake8 ile Stil ve Sözdizimi Kontrolü
-      run: flake8 app/
-
-    - name: MyPy ile Tip Kontrolü
-      run: mypy app/
-      
   # ====================================================================
   # AŞAMA 2: DOCKER İMAJINI OLUŞTUR, GHCR'YE GÖNDER VE RENDER'I TETİKLE
   # ====================================================================

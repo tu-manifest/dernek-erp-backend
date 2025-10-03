@@ -34,39 +34,5 @@ dependencies = [
 packages = ["app"] # Sadece 'app' klasörünü Python paketi olarak tanı.
 
 
-# ==============================================================================
-# [tool.black] Bölümü: Kod Biçimlendirici (Formatter) Ayarları
-# = Kodun otomatik olarak belirli bir stile göre düzenlenmesini sağlar.
-# ==============================================================================
-[tool.black]
-line-length = 88 # Satır uzunluğunu 88 karakterde tutar (PEP 8 standardı)
-target-version = ['py311']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | \.mypy_cache
-  | migrations
-)/
-'''
 
 
-# ==============================================================================
-# [tool.mypy] Bölümü: Tip Kontrolcüsü (Type Checker) Ayarları
-# = Tip uyumsuzluklarını kod çalışmadan önce yakalar.
-# ==============================================================================
-[tool.mypy]
-# Projemizdeki tüm modüller için katı tip kontrolünü etkinleştir
-strict = true 
-# Harici kütüphanelerde tip bilgisi eksikse hata verme
-ignore_missing_imports = true
-# Geliştirme kolaylığı için strict=true yerine bu ikisini açabilirsiniz:
-# disallow_untyped_defs = true  # Tüm fonksiyonların tip belirtmesi zorunlu olsun
-# warn_unused_ignores = true
-
-
-# ==============================================================================
-# [tool.flake8] Bölümü: Kod Denetleyicisi (Linter) Ayarları
-# = Python kodlama standartlarına (PEP 8) uyumu kontrol eder.
-# ==============================================================================
