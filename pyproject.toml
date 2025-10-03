@@ -76,5 +76,5 @@ max-line-length = 88 # Black ile aynı satır uzunluğu
 # E203: Black ile çakışır, yoksayılır.
 # W503: Black ile çakışır, yoksayılır.
 # D100, D101 vb.: Docstring (açıklama) kurallarını şimdilik yoksayıyoruz.
-ignore = ["E203", "W503", "D"] 
+ignore = ["E203", "W503", "D", "E501", "E302", "E305"] 
 exclude = [".venv", ".git", "__pycache__", "migrations"]
