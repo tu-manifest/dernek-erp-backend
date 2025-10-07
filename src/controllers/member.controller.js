@@ -9,6 +9,5 @@ export const getUserById =  async (req, res) => {
 
     } catch (error) {
       next(error); 
-
     }
 }
