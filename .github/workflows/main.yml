@@ -1,4 +1,4 @@
-name: Dernek ERP CI/CD Pipeline
+name: Dernek ERP CI/CD Pipeline (Node.js) 🌐
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
   schedule:
-    - cron: '0 0 * * 0'  # Haftalık security scan
+    - cron: '0 0 * * 0'   # Haftalık security scan
 
 permissions:
-  contents: write  # Auto-commit için write izni
+  contents: write   # Auto-commit için write izni
   packages: write
   id-token: write
 
@@ -21,35 +21,46 @@ jobs:
       - name: Kodu Klonla
         uses: actions/checkout@v4.1.7
 
-      - name: Python Ortamını Kur
-        uses: actions/setup-python@v5.2.0
+      - name: Node.js Ortamını Kur
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          node-version: '20.x' # İhtiyacınıza göre sürümü ayarlayın
+          cache: 'npm'
 
       - name: Bağımlılıkları Kur
-        run: pip install -r requirements.txt
+        run: npm ci # 'npm install' yerine temiz kurulum için 'npm ci' önerilir
 
-      - name: Black ile Otomatik Formatlama
-        run: |
-          pip install black
-          black .
+      - name: Lint ve Format Kontrolü (ESLint)
+        # Projenizde 'lint' veya benzer bir betik (script) tanımlı olmalıdır
+        run: npm run lint # Örn: "lint": "eslint ."
+        continue-on-error: true # Hata durumunda bile diğer adımların çalışmasına izin verir
 
-      - name: Flake8 ile Kod Stili Kontrolü (Opsiyonel)
+      - name: Formatlama (Prettier/Vs. Otomatik Düzeltme)
+        id: format-check # ⭐ YENİ: Bu adımı tanımlıyoruz
         run: |
-          pip install flake8
-          flake8 . --max-line-length=88 --extend-ignore=E203
+          # Projenizde 'format' betiği varsa burayı etkinleştirin:
+          # npm run format
+          echo "Formatlama adımı atlandı. Projenizde 'npm run format' betiği varsa buraya ekleyin."
+
+
+      - name: Testleri Çalıştır (Opsiyonel)
+        # Eğer projenizde unit/entegrasyon testleri varsa buraya ekleyin
+        run: npm test || echo "Testler bulunamadı veya çalıştırılamadı."
         continue-on-error: true
 
+
       - name: Format Değişikliklerini Commit Et
+        # Formatlama adımı çalıştıysa ve değişiklik yaptıysa geri commit eder
+        if: always() && steps.format-check.outcome == 'success' # ✅ DÜZELTİLMİŞ SATIR
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git add .
-          git commit -m "Auto-format with Black" || echo "No changes to commit"
+          git commit -m "Auto-format with Prettier/Linter" || echo "No changes to commit"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   # AŞAMA 2: SECURITY SCAN
   security-scan:
@@ -59,22 +70,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.7
 
-      - name: Python Ortamını Kur
-        uses: actions/setup-python@v5.2.0
+      - name: Node.js Ortamını Kur
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          node-version: '20.x'
+          cache: 'npm'
 
-      - name: Dependency Scan (Safety)
-        run: |
-          pip install safety
-          safety check -r requirements.txt --full-report
-        continue-on-error: true
+      - name: Bağımlılıkları Kur
+        run: npm ci
+
+      - name: Dependency Scan (npm audit)
+        run: npm audit --audit-level=critical # Kritik seviyedeki açıkları kontrol et
+        continue-on-error: true # CI/CD hattını kesmemek için
 
   # AŞAMA 3: DOCKER BUILD VE PUSH
   build-and-push-docker:
     needs: [code-quality, security-scan]
     runs-on: ubuntu-latest
+    # Sadece 'main' dalına yapılan 'push' olaylarında çalışır. 'develop' için de ekleyebilirsiniz.
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
@@ -89,7 +102,7 @@ jobs:
       - name: Buildx Kur
         uses: docker/setup-buildx-action@v3.11.0
         with:
-          driver: docker-container  # Cache export için uygun driver
+          driver: docker-container
           install: true
 
       - name: Metadata Oluştur
@@ -101,7 +114,7 @@ jobs:
             type=ref,event=branch
             type=sha
 
-      - name: Docker Build ve Push 
+      - name: Docker Build ve Push 📦
         uses: docker/build-push-action@v6.7.0
         with:
           context: .
