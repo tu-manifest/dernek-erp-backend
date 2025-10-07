@@ -88,7 +88,7 @@ jobs:
     needs: [code-quality, security-scan]
     runs-on: ubuntu-latest
     # Sadece 'main' dalına yapılan 'push' olaylarında çalışır. 'develop' için de ekleyebilirsiniz.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
 
