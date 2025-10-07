@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL Veritabanı Servisi
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: dernekuser
+      POSTGRES_PASSWORD: dernekpass
+      POSTGRES_DB: dernek_erp_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. Node.js API Servisi (Watch Mode Eklendi)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dernek-erp-api
+    restart: always
+    # Nodemon'a artık gerek kalmadığı için standart çalıştırma komutunu kullanıyoruz.
+    # Bu, Dockerfile'daki CMD'yi geçersiz kılar.
+    command: npm start 
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: dernekuser
+      DB_PASSWORD: dernekpass
+      DB_NAME: dernek_erp_db
+    volumes:
+      # node_modules'in host'tan senkronize olmasını engelle (Çok Önemli)
+      - /usr/src/app/node_modules 
+    
+    # Yeni Geliştirme (Develop) Bölümü
+    develop:
+      watch:
+        # 1. Kod Dosyalarını Senkronize Etme (Hızlı Değişiklikler İçin)
+        # Lokaldeki her şeyi (.) container içindeki /usr/src/app hedefine anında kopyala.
+        - action: sync
+          path: .
+          target: /usr/src/app
+          ignore:
+            - node_modules/ # Bağımlılıkları senkronize etme
+            - .git/
+        
+        # 2. Bağımlılık Dosyaları Değiştiğinde İmajı Yeniden Oluşturma (Rebuild)
+        # package.json değiştiğinde tüm imajı yeniden build et ve servisi baştan başlat.
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: package-lock.json
+
+# 3. Veri Kalıcılığı için Volume
+volumes:
+  postgres_data:

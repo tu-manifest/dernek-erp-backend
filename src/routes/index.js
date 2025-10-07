@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 router.use("/member", memberRoutes);
+
 router.get("/", (req, res) => {
     res.send("API is running..");
 });
