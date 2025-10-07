@@ -8,7 +8,7 @@ export const getUserById =  async (req, res) => {
         res.status(200).json({success: true, data: user}); 
 
     } catch (error) {
-      next(error); // hata middleware'ine aktar
+      next(error); 
 
     }
 }
