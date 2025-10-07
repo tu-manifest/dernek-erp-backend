@@ -11,3 +11,11 @@ export const getUserById =  async (req, res) => {
       next(error); 
     }
 }
+export const addNewMember = async (req, res, next) => {
+    try {
+        const newMember = await Memberservice.addNewMember(req.body);
+        res.status(201).json({ success: true, data: newMember });
+    } catch (error) {
+        next(error);
+    }
+}
