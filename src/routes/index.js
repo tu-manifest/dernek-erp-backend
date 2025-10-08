@@ -1,13 +1,10 @@
 import express from 'express';
 import memberRoutes from './member.routes.js';
+import groupRoutes from './group.routes.js';
 const router = express.Router();
 
 
 
 router.use("/member", memberRoutes);
-
-router.get("/", (req, res) => {
-    res.send("API is running..");
-});
-
+router.use("/group", groupRoutes);
 export default router;
