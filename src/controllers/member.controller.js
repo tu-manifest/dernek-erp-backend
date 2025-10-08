@@ -1,6 +1,5 @@
 import express from 'express';
 import * as Memberservice from '../services/member.service.js';
-const router = express.Router();
 
 export const getUserById =  async (req, res) => {
     try{

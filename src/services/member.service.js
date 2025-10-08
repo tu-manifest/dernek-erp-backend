@@ -1,7 +1,6 @@
 import express from 'express';
 import {Member} from '../models/member.model.js';
 
-const app = express();
 
 export const addNewMember = async (req, res, next) => {
   // 1. Form Verilerini Alma ve Dönüştürme
