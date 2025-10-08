@@ -1,32 +1,22 @@
 import  { Group } from '../models/group.model.js';
 
-export const addNewGroup = async (req, res, next) => {
-  const { name, description } = req.body;
-
+export const addNewGroup = async (groupData) => {
+    console.log("addNewGroup service çalıştı");
+    console.log("Gelen groupData:", groupData);
+  const { name, description } = groupData;
+  console.log("Grup verileri - name:", name, "description:", description);
   try {
-    const newGroup = await Group.create({ name, description });
+    const newGroup = await Group.create({ group_name: name, description, isActive: true });
+    console.log("Yeni grup oluşturuldu:", newGroup);
+    return {
+      id: newGroup.id,
+      name: newGroup.group_name,
+      description: newGroup.description,
+      isActive: newGroup.isActive
+    };
 
-    res.status(201).json({
-      success: true,
-      message: 'Yeni grup başarıyla oluşturuldu.',
-      group: {
-        id: newGroup.id,
-        name: newGroup.name,
-        description: newGroup.description,
-      }
-    });
   } catch (error) {
     console.error("Grup kaydı sırasında hata:", error);
-
-    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
-      const messages = error.errors.map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Doğrulama hatası oluştu.',
-        errors: messages
-      });
-    }
-
-    next(error);
+    throw error; // Hatayı controller'a fırlat
   }
 };
