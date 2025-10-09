@@ -18,7 +18,7 @@ router.get("/", getAllGroups);
 // READ - ID'ye göre grup getir
 router.get("/:id", getGroupById);
 
-// UPDATE - Grup güncelle (isActive durumu dahil)
+// UPDATE - Grup güncelle 
 router.put("/:id", updateGroup);
 
 // DELETE - Grup kalıcı olarak sil
