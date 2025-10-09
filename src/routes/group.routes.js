@@ -1,7 +1,27 @@
 import express from 'express';
-import { addNewGroup } from '../controllers/group.controller.js';
+import { 
+    addNewGroup, 
+    getAllGroups, 
+    getGroupById, 
+    updateGroup, 
+    deleteGroup
+} from '../controllers/group.controller.js';
+
 const router = express.Router();
 
+// CREATE - Yeni grup oluştur
 router.post("/add-new-group", addNewGroup);
+
+// READ - Tüm grupları getir
+router.get("/", getAllGroups);
+
+// READ - ID'ye göre grup getir
+router.get("/:id", getGroupById);
+
+// UPDATE - Grup güncelle (isActive durumu dahil)
+router.put("/:id", updateGroup);
+
+// DELETE - Grup kalıcı olarak sil
+router.delete("/:id", deleteGroup);
 
 export default router;

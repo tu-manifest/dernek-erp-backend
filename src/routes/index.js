@@ -5,6 +5,7 @@ const router = express.Router();
 
 
 
-router.use("/member", memberRoutes);
-router.use("/group", groupRoutes);
+router.use("/members", memberRoutes);
+
+router.use("/groups", groupRoutes);
 export default router;
