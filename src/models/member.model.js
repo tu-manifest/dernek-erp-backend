@@ -1,4 +1,3 @@
-// models/Member.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -30,10 +29,6 @@ export const Member = sequelize.define('Member', {
       notNull: { msg: 'T.C. kimlik numarası gereklidir.' },
       isNumeric: true,
       len: [11, 11],
-      // Frontend'deki özel doğrulama kuralı için:
-      // Sequelize'de TC No algoritmasını doğrulamak yerine,
-      // benzersizlik ve format kontrolü (11 hane) yeterli kabul edilebilir.
-      // Detaylı algoritma kontrolü genellikle backend servislerinde yapılır.
     }
   },
   birthDate: { // Doğum Tarihi (Yaş kontrolü frontend'de yapılıyor)
@@ -42,24 +37,14 @@ export const Member = sequelize.define('Member', {
     validate: {
       notNull: { msg: 'Doğum tarihi gereklidir.' },
       isDate: true,
-      // Yaş kontrolü (18 yaş üstü) isteğe bağlı olarak buraya da eklenebilir.
     }
   },
-  membershipType: { // Üyelik Türü (active, honorary, supporting, student)
-    type: DataTypes.ENUM('active', 'honorary', 'supporting', 'student'),
-    allowNull: false,
-    validate: {
-      notNull: { msg: 'Üyelik türü seçiniz.' },
-    }
-  },
-
   // --- İletişim Bilgileri ---
   phoneNumber: { // Telefon Numarası
     type: DataTypes.STRING(20), // +90 555 123 45 67 gibi bir format için yeterli
     allowNull: false,
     validate: {
       notNull: { msg: 'Telefon numarası gereklidir.' },
-      // Regex kontrolü burada yapılabilir veya sadece format kontrolü ile yetinilebilir
     }
   },
   email: { // E-posta Adresi
@@ -80,7 +65,21 @@ export const Member = sequelize.define('Member', {
     }
   },
   
-  // --- Üyelik Detayları / Aidat ---
+  // --- Grup İlişkisi ---
+  group_id: { // Hangi gruba ait olduğu
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'group', // group tablosuna referans
+      key: 'id'
+    },
+    validate: {
+      notNull: { msg: 'Grup seçimi gereklidir.' },
+      isInt: { msg: 'Geçerli bir grup seçiniz.' }
+    }
+  },  
+  
+  // --- Üyelik Detayları / Aidat --- 
   applicationDate: { // Başvuru Tarihi (Otomatik olarak atanıyor)
     type: DataTypes.DATEONLY,
     allowNull: false,
@@ -110,7 +109,6 @@ export const Member = sequelize.define('Member', {
       notNull: { msg: 'Ödeme durumu seçiniz.' },
     }
   },
-
 
   // --- Onaylar ---
   charterApproval: { // Dernek Tüzüğü Onayı

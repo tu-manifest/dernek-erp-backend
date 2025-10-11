@@ -1,7 +1,4 @@
-// config/database.js (YENİ Sürüm: Sequelize kullanacak)
-
 import { Sequelize } from 'sequelize';
-// pg kütüphanesini artık doğrudan kullanmıyoruz, Sequelize hallediyor.
 
 const DB_CONFIG = {
     user: 'dernekuser',
@@ -30,16 +27,15 @@ async function connectDatabase() {
         await sequelize.authenticate();
         console.log('✅ Sequelize bağlantısı (PostgreSQL) başarılı!');
         
+        // Model ilişkilerini import et
+        await import('../models/index.js');
+        
         // Modelleri otomatik olarak senkronize et (tabloyu oluştur/güncelle).
-        // DİKKAT: Gerçek uygulamalarda 'alter: true' veya 'force: true' 
-        // yerine migration kullanılması önerilir!
         await sequelize.sync({ alter: true }); 
         console.log('✅ Veritabanı tabloları senkronize edildi.');
 
     } catch (error) {
         console.error('❌ Veritabanı bağlantısı veya senkronizasyonu BAŞARISIZ oldu:', error.message);
-        // Uygulamanın başlatılmasını engellemek için hata fırlatabilirsiniz
-        // process.exit(1);
     }
 }
 

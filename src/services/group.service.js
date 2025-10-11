@@ -1,6 +1,6 @@
-import { Group } from '../models/group.model.js';
+import { Group, Member } from '../models/index.js';
 
-// CREATE - Mevcut (sadece field mapping düzeltildi)
+// CREATE - Mevcut (aynı)
 export const addNewGroup = async (groupData) => {
     console.log("addNewGroup service çalıştı");
     console.log("Gelen groupData:", groupData);
@@ -30,12 +30,17 @@ export const addNewGroup = async (groupData) => {
     }
 };
 
-// READ - Tüm grupları getir
+// READ - Tüm grupları üye sayısıyla getir
 export const getAllGroups = async () => {
     console.log("getAllGroups service çalıştı");
     
     try {
         const groups = await Group.findAll({
+            include: [{
+                model: Member,
+                as: 'members',
+                attributes: ['id', 'fullName'], // Sadece gerekli alanları getir
+            }],
             order: [['createdAt', 'DESC']]
         });
         
@@ -44,6 +49,11 @@ export const getAllGroups = async () => {
             group_name: group.group_name,
             description: group.description,
             isActive: group.isActive,
+            memberCount: group.members.length,
+            members: group.members.map(member => ({
+                id: member.id,
+                fullName: member.fullName
+            })),
             createdAt: group.createdAt,
             updatedAt: group.updatedAt
         }));
@@ -53,12 +63,18 @@ export const getAllGroups = async () => {
     }
 };
 
-// READ - ID'ye göre grup getir
+// READ - ID'ye göre grup getir (üyelerle birlikte)
 export const getGroupById = async (id) => {
     console.log("getGroupById service çalıştı, ID:", id);
     
     try {
-        const group = await Group.findByPk(id);
+        const group = await Group.findByPk(id, {
+            include: [{
+                model: Member,
+                as: 'members',
+                attributes: ['id', 'fullName', 'email', 'membershipType', 'paymentStatus']
+            }]
+        });
         
         if (!group) {
             const error = new Error('Grup bulunamadı');
@@ -71,6 +87,14 @@ export const getGroupById = async (id) => {
             group_name: group.group_name,
             description: group.description,
             isActive: group.isActive,
+            memberCount: group.members.length,
+            members: group.members.map(member => ({
+                id: member.id,
+                fullName: member.fullName,
+                email: member.email,
+                membershipType: member.membershipType,
+                paymentStatus: member.paymentStatus
+            })),
             createdAt: group.createdAt,
             updatedAt: group.updatedAt
         };
@@ -80,7 +104,7 @@ export const getGroupById = async (id) => {
     }
 };
 
-// UPDATE - Grup güncelle (isActive dahil)
+// Diğer fonksiyonlar aynı kalacak...
 export const updateGroup = async (id, updateData) => {
     console.log("updateGroup service çalıştı, ID:", id);
     console.log("Güncellenecek veriler:", updateData);
@@ -117,16 +141,27 @@ export const updateGroup = async (id, updateData) => {
     }
 };
 
-// DELETE - Grup kalıcı olarak sil
 export const deleteGroup = async (id) => {
     console.log("deleteGroup service çalıştı, ID:", id);
-    
+     
     try {
-        const group = await Group.findByPk(id);
+        const group = await Group.findByPk(id, {
+            include: [{
+                model: Member,
+                as: 'members'
+            }]
+        });
         
         if (!group) {
             const error = new Error('Silinecek grup bulunamadı');
             error.statusCode = 404;
+            throw error;
+        }
+
+        // Grup silinmeden önce üye kontrolü
+        if (group.members.length > 0) {
+            const error = new Error(`Bu grup silinemez. ${group.members.length} üye bu gruba kayıtlı.`);
+            error.statusCode = 400;
             throw error;
         }
         
