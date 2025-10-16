@@ -31,6 +31,7 @@ export const addNewGroup = async (groupData) => {
 };
 
 // READ - Tüm grupları üye sayısıyla getir
+// READ - Tüm grupları istatistiklerle birlikte getir
 export const getAllGroups = async () => {
     console.log("getAllGroups service çalıştı");
     
@@ -39,24 +40,50 @@ export const getAllGroups = async () => {
             include: [{
                 model: Member,
                 as: 'members',
-                attributes: ['id', 'fullName'], // Sadece gerekli alanları getir
+                attributes: ['id'] // Sadece sayım için ID'yi getir
             }],
             order: [['createdAt', 'DESC']]
         });
         
-        return groups.map(group => ({
+        // İstatistikleri hesapla
+        const totalGroups = groups.length;
+        const activeGroups = groups.filter(group => group.isActive === true).length;
+        const inactiveGroups = totalGroups - activeGroups;
+        
+        // Üye istatistikleri
+        const memberCounts = groups.map(group => group.members.length);
+        const totalMembers = memberCounts.reduce((sum, count) => sum + count, 0);
+        const averageMembersPerGroup = totalGroups > 0 ? (totalMembers / totalGroups).toFixed(2) : 0;
+        const largestGroupSize = memberCounts.length > 0 ? Math.max(...memberCounts) : 0;
+        const smallestGroupSize = memberCounts.length > 0 ? Math.min(...memberCounts) : 0;
+        
+        // Grup listesini hazırla (members olmadan)
+        const groupList = groups.map(group => ({
             id: group.id,
             group_name: group.group_name,
             description: group.description,
             isActive: group.isActive,
             memberCount: group.members.length,
-            members: group.members.map(member => ({
-                id: member.id,
-                fullName: member.fullName
-            })),
             createdAt: group.createdAt,
             updatedAt: group.updatedAt
         }));
+        
+        return {
+            // İstatistikler
+            statistics: {
+                totalGroups: totalGroups,
+                activeGroups: activeGroups,
+                inactiveGroups: inactiveGroups,
+                totalMembers: totalMembers,
+                averageMembersPerGroup: parseFloat(averageMembersPerGroup),
+                largestGroupSize: largestGroupSize,
+                smallestGroupSize: smallestGroupSize,
+                groupsWithoutMembers: memberCounts.filter(count => count === 0).length
+            },
+            // Grup listesi
+            groups: groupList
+        };
+        
     } catch (error) {
         console.error("Grupları getirme sırasında hata:", error);
         throw error;

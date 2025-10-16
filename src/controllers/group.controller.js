@@ -25,12 +25,13 @@ export const addNewGroup = async (req, res, next) => {
 // READ - Tüm grupları getir
 export const getAllGroups = async (req, res, next) => {
     try {
-        const groups = await Groupservice.getAllGroups();
+        const result = await Groupservice.getAllGroups();
         res.status(200).json({
             success: true,
-            message: 'Gruplar başarıyla getirildi.',
-            count: groups.length,
-            groups: groups
+            message: 'Gruplar ve istatistikler başarıyla getirildi.',
+            statistics: result.statistics,
+            count: result.groups.length,
+            groups: result.groups
         });
     } catch (error) {
         next(error);
