@@ -1,4 +1,8 @@
 import { Sequelize } from 'sequelize';
+import EventEmitter from 'events';
+
+// Event Emitter limitini artır (MaxListenersExceededWarning için)
+EventEmitter.defaultMaxListeners = 15;
 
 const DB_CONFIG = {
     user: 'dernekuser',
@@ -16,8 +20,8 @@ const sequelize = new Sequelize(
     {
         host: DB_CONFIG.host,
         port: DB_CONFIG.port,
-        dialect: 'postgres', // PostgreSQL kullanacağımızı belirtiyoruz
-        logging: false, // Konsolda SQL sorgularının gösterilip gösterilmeyeceği
+        dialect: 'postgres',
+        logging: false,
     }
 );
 
@@ -30,7 +34,7 @@ async function connectDatabase() {
         // Model ilişkilerini import et
         await import('../models/index.js');
         
-        // Modelleri otomatik olarak senkronize et (tabloyu oluştur/güncelle).
+        // Modelleri otomatik olarak senkronize et
         await sequelize.sync({ alter: true }); 
         console.log('✅ Veritabanı tabloları senkronize edildi.');
 
@@ -41,5 +45,4 @@ async function connectDatabase() {
 
 connectDatabase();
 
-// sequelize nesnesini dışa aktarıyoruz
 export default sequelize;

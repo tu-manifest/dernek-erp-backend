@@ -1,7 +1,7 @@
-// src/routes/finance.routes.js
-const express = require('express');
+import express from 'express';
+import * as financeController from '../controllers/finance.controller.js'; // ⭐ DEĞIŞTI
+
 const router = express.Router();
-const financeController = require('../controllers/finance.controller');
 
 // Borç Girişi Ekranı (Üye/Dış Borçlu ekleme)
 router.post('/debt', financeController.addDebt);
@@ -18,4 +18,4 @@ router.post('/collection', financeController.recordCollection);
 // Tahsilat Ekranı için Borçlu Arama (3. harf sonrası çekme)
 router.get('/debtor/search', financeController.searchDebtors);
 
-module.exports = router;
+export default router;

@@ -1,9 +1,14 @@
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
-import qrcode from 'qrcode-terminal';
 
 let clientInstance = null;
 let clientReady = false;
+let io = null; // Socket.IO instance'ı
+
+// Socket.IO instance'ını set et
+export const setSocketIO = (socketIO) => {
+    io = socketIO;
+};
 
 export const initializeClient = () => {
     if (clientInstance) {
@@ -23,31 +28,51 @@ export const initializeClient = () => {
                 '--no-zygote',
                 '--disable-gpu'
             ],
-            executablePath: '/usr/bin/chromium-browser' // Alpine Linux'ta Chromium yolu
+            executablePath: '/usr/bin/chromium-browser'
         }
     });
 
+    // QR Kod oluşturulduğunda frontend'e gönder
     clientInstance.on('qr', (qr) => {
         console.log('----------------------------------------------------');
-        console.log('WHATSAPP OTURUMU GEREKLİ: Lütfen aşağıdaki QR kodunu taratın.');
-        qrcode.generate(qr, { small: true });
+        console.log('WHATSAPP QR KODU OLUŞTURULDU - Frontend\'e gönderiliyor...');
         console.log('----------------------------------------------------');
+        
         clientReady = false;
+        
+        // Socket.IO ile QR kodunu frontend'e gönder
+        if (io) {
+            io.emit('whatsapp-qr', { qr });
+            console.log('✅ QR kodu Socket.IO ile gönderildi');
+        }
     });
 
     clientInstance.on('ready', () => {
         console.log('✅ WhatsApp Client Hazır ve Bağlandı!');
         clientReady = true;
+        
+        // Frontend'e hazır durumunu bildir
+        if (io) {
+            io.emit('whatsapp-ready', { status: 'ready' });
+        }
     });
 
     clientInstance.on('auth_failure', msg => {
         console.error('❌ Kimlik doğrulama hatası:', msg);
         clientReady = false;
+        
+        if (io) {
+            io.emit('whatsapp-auth-failure', { message: msg });
+        }
     });
     
     clientInstance.on('disconnected', (reason) => {
         console.warn('⚠️ WhatsApp Client Bağlantısı Kesildi:', reason);
         clientReady = false;
+        
+        if (io) {
+            io.emit('whatsapp-disconnected', { reason });
+        }
     });
 
     clientInstance.initialize();
@@ -55,6 +80,7 @@ export const initializeClient = () => {
     return clientInstance;
 };
 
+// ...existing code...
 export const getClient = () => clientInstance;
 export const isClientReady = () => clientReady;
 
