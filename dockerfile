@@ -1,25 +1,33 @@
-# Temel imaj olarak Node.js 20'yi kullan
 FROM node:20-alpine
 
-# Uygulamanın çalışacağı dizini belirle
+# Chromium ve gerekli bağımlılıkları yükle
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    nodejs \
+    yarn
+
+# Puppeteer'a sistemdeki Chromium'u kullanmasını söyle
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /usr/src/app
 
-# package.json ve package-lock.json dosyalarını kopyala
-# Bu, bağımlılıkların cache'lenmesini maksimize eder
+# package.json ve package-lock.json'ı kopyala
 COPY package*.json ./
-
-# Tüm bağımlılıkları yükle (devDependencies dahil)
-RUN npm install
-
-# Geliştirme sürecini kolaylaştırmak için nodemon'u global olarak yükle
+# Bağımlılıkları yükle
 RUN npm install -g nodemon
 
-# Uygulama kodunun geri kalanını kopyala
+RUN npm install 
+# Tüm dosyaları kopyala
 COPY . .
 
-# Uygulamanın dinleyeceği portu belirt (sadece dokümantasyon amaçlı)
-EXPOSE 3000
+# Port'u aç
+EXPOSE 8000
 
-# Nodemon ile geliştirme komutunu çalıştır
-# package.json dosyanızda 'dev' komutunun nodemon'u çalıştırdığından emin olun
-CMD ["npm", "run", "start"]
+# Uygulamayı başlat
+CMD ["npm", "start"]

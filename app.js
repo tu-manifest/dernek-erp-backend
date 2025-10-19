@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import pool from './src/config/database.js';
+import sequelize from './src/config/database.js'; // pool yerine sequelize
 import routes from './src/routes/index.js';
+import { initializeClient } from './src/utils/whatsappClient.js'; // named import
 
 const app = express();
 
@@ -24,10 +25,16 @@ app.use(express.json());
 // 4️⃣ Rotalar
 app.use('/api', routes);
 
-// 5️⃣ Bağlantı testi
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) console.error('Veritabanı bağlantısı BAŞARISIZ:', err);
-  else console.log('Veritabanı bağlantısı BAŞARILI:', res.rows[0].now);
-});
+// 5️⃣ WHATSAPP ÇALIŞTIRMA
+initializeClient();
+
+// 6️⃣ Sequelize bağlantı testi
+sequelize.authenticate()
+  .then(() => {
+    console.log('✅ Sequelize veritabanı bağlantısı başarılı!');
+  })
+  .catch(err => {
+    console.error('❌ Veritabanı bağlantısı başarısız:', err);
+  });
 
 export default app;
