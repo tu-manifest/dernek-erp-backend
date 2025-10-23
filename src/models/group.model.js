@@ -1,8 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
- 
-
-export const Group = sequelize.define('Group', {
+export default (sequelize) => {
+  const Group = sequelize.define('Group', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -23,4 +21,14 @@ export const Group = sequelize.define('Group', {
 }, {
     tableName: 'group',
     timestamps: true
-});
+  });
+
+  Group.associate = (models) => {
+    Group.hasMany(models.Member, {
+      foreignKey: 'group_id',
+      as: 'members',
+    });
+  };
+
+  return Group;
+};

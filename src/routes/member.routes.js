@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 // CREATE - Yeni üye oluştur
-router.post("/add-new-member", addNewMember);
+router.post("/", addNewMember);
 
 // READ - Tüm üyeleri getir
 router.get("/", getAllMembers);

@@ -1,11 +1,11 @@
-import { Member, Group, Debt, ExternalDebtor, Collection } from '../models/index.js';
 import { Op } from 'sequelize';
+import db from '../models/index.js';
 
 /**
  * Tüm borçluları (Üye ve Dış Borçluları) arama
  */
 export const searchDebtors = async (searchTerm) => {
-  const members = await Member.findAll({
+  const members = await db.Member.findAll({
     attributes: ['id', 'fullName'],
     where: {
       fullName: { [Op.iLike]: `%${searchTerm}%` }
@@ -13,7 +13,7 @@ export const searchDebtors = async (searchTerm) => {
     limit: 10
   });
 
-  const externalDebtors = await ExternalDebtor.findAll({
+  const externalDebtors = await db.ExternalDebtor.findAll({
     attributes: ['id', 'name'],
     where: {
       name: { [Op.iLike]: `%${searchTerm}%` }
@@ -31,11 +31,11 @@ export const searchDebtors = async (searchTerm) => {
  * Borç detaylarını ve tahsilat geçmişini çeker
  */
 export const getDebtDetails = async (debtId) => {
-  const debt = await Debt.findByPk(debtId, {
+  const debt = await db.Debt.findByPk(debtId, {
     include: [
-      { model: Member, as: 'member', attributes: ['fullName', 'email'] },
-      { model: ExternalDebtor, as: 'externalDebtor', attributes: ['name', 'isInstitution'] },
-      { model: Collection, as: 'collections' }
+      { model: db.Member, as: 'member', attributes: ['fullName', 'email'] },
+      { model: db.ExternalDebtor, as: 'externalDebtor', attributes: ['name', 'isInstitution'] },
+      { model: db.Collection, as: 'collections' }
     ]
   });
   
@@ -47,7 +47,7 @@ export const getDebtDetails = async (debtId) => {
                    ? debt.member ? debt.member.fullName : 'Üye Bulunamadı'
                    : debt.externalDebtor ? debt.externalDebtor.name : 'Dış Borçlu Bulunamadı';
 
-  const unpaidDebts = await Debt.findAll({
+  const unpaidDebts = await db.Debt.findAll({
       where: {
           [debt.debtorType === 'MEMBER' ? 'memberId' : 'externalDebtorId']: 
             debt.debtorType === 'MEMBER' ? debt.memberId : debt.externalDebtorId,
@@ -80,7 +80,7 @@ export const addDebt = async (data) => {
         throw new Error("Debtor must be selected.");
     }
 
-    return Debt.create({
+    return db.Debt.create({
         ...data,
         debtorType,
         collectedAmount: 0.00,
@@ -92,7 +92,7 @@ export const addDebt = async (data) => {
  * Tahsilat işlemi kaydeder
  */
 export const recordCollection = async (debtId, amountPaid, paymentMethod, receiptNumber, collectionDate, notes) => {
-  const debt = await Debt.findByPk(debtId);
+  const debt = await db.Debt.findByPk(debtId);
 
   if (!debt) {
     throw new Error('Debt not found');
@@ -104,7 +104,7 @@ export const recordCollection = async (debtId, amountPaid, paymentMethod, receip
       throw new Error(`Amount paid (${amountPaid}) exceeds outstanding balance (${outstandingAmount}).`);
   }
 
-  await Collection.create({
+  await db.Collection.create({
       debtId,
       amountPaid,
       paymentMethod,
@@ -134,10 +134,10 @@ export const recordCollection = async (debtId, amountPaid, paymentMethod, receip
  * Borç listesini getirir
  */
 export const getDebtListView = async () => {
-  return Debt.findAll({
+  return db.Debt.findAll({
       include: [
-        { model: Member, as: 'member', attributes: ['fullName'] },
-        { model: ExternalDebtor, as: 'externalDebtor', attributes: ['name'] }
+        { model: db.Member, as: 'member', attributes: ['fullName'] },
+        { model: db.ExternalDebtor, as: 'externalDebtor', attributes: ['name'] }
       ],
       order: [['dueDate', 'ASC']]
   });

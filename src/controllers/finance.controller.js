@@ -81,3 +81,11 @@ export const searchDebtors = async (req, res) => {
     handleError(res, error);
   }
 };
+
+export default {
+  addDebt,
+  recordCollection,
+  getDebtList,
+  getDebtDetails,
+  searchDebtors
+};

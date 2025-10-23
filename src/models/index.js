@@ -1,31 +1,39 @@
-import { Member } from './member.model.js';
-import { Group } from './group.model.js';
-import { Debt } from './debt.model.js';
-import { ExternalDebtor } from './externalDebtor.model.js';
-import { Collection } from './collection.model.js';
+import sequelize from '../config/database.js';
+import memberModel from './member.model.js';
+import groupModel from './group.model.js';
+import eventModel from './event.model.js';
+import donationCampaignModel from './donationCampaign.model.js';
+import donationModel from './donation.model.js';
+import donorModel from './donor.model.js';
+import debtModel from './debt.model.js';
+import collectionModel from './collection.model.js';
+import externalDebtorModel from './externalDebtor.model.js';
 
-// ✅ Debt ve Member ilişkisi
-Member.hasMany(Debt, { foreignKey: 'memberId', as: 'memberDebts' });
-Debt.belongsTo(Member, { foreignKey: 'memberId', as: 'member' });
+const db = {};
 
-// ✅ Debt ve ExternalDebtor ilişkisi
-ExternalDebtor.hasMany(Debt, { foreignKey: 'externalDebtorId', as: 'externalDebts' });
-Debt.belongsTo(ExternalDebtor, { foreignKey: 'externalDebtorId', as: 'externalDebtor' });
+const models = {
+  Member: memberModel,
+  Group: groupModel,
+  Event: eventModel,
+  DonationCampaign: donationCampaignModel,
+  Donation: donationModel,
+  Donor: donorModel,
+  Debt: debtModel,
+  Collection: collectionModel,
+  ExternalDebtor: externalDebtorModel,
+};
 
-// ✅ Debt ve Collection ilişkisi
-Debt.hasMany(Collection, { foreignKey: 'debtId', as: 'collections' });
-Collection.belongsTo(Debt, { foreignKey: 'debtId', as: 'debt' });
-
-// ✅ Group ve Member ilişkisi
-Group.hasMany(Member, { 
-  foreignKey: 'group_id',
-  as: 'members'
+Object.keys(models).forEach(modelName => {
+  const model = models[modelName](sequelize);
+  db[model.name] = model;
 });
 
-Member.belongsTo(Group, { 
-  foreignKey: 'group_id',
-  as: 'group'
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
 });
 
-// ✅ Modelleri export et 
-export { Member, Group, Debt, ExternalDebtor, Collection };
+db.sequelize = sequelize;
+
+export default db;

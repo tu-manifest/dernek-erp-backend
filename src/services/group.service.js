@@ -1,4 +1,5 @@
-import { Group, Member } from '../models/index.js';
+import db from '../models/index.js';
+const { Group, Member } = db;
 
 // CREATE - Mevcut (aynı)
 export const addNewGroup = async (groupData) => {
@@ -92,43 +93,27 @@ export const getAllGroups = async () => {
 
 // READ - ID'ye göre grup getir (üyelerle birlikte)
 export const getGroupById = async (id) => {
-    console.log("getGroupById service çalıştı, ID:", id);
-    
-    try {
-        const group = await Group.findByPk(id, {
-            include: [{
-                model: Member,
-                as: 'members',
-                attributes: ['id', 'fullName', 'email', 'membershipType', 'paymentStatus']
-            }]
-        });
-        
-        if (!group) {
-            const error = new Error('Grup bulunamadı');
-            error.statusCode = 404;
-            throw error;
-        }
-        
-        return {
-            id: group.id,
-            group_name: group.group_name,
-            description: group.description,
-            isActive: group.isActive,
-            memberCount: group.members.length,
-            members: group.members.map(member => ({
-                id: member.id,
-                fullName: member.fullName,
-                email: member.email,
-                membershipType: member.membershipType,
-                paymentStatus: member.paymentStatus
-            })),
-            createdAt: group.createdAt,
-            updatedAt: group.updatedAt
-        };
-    } catch (error) {
-        console.error("Grup getirme sırasında hata:", error);
-        throw error;
+  try {
+    const group = await Group.findByPk(id, {
+      include: [{
+        model: Member,
+        as: 'members',
+        attributes: { exclude: ['group_id'] }
+      }]
+    });
+
+    if (!group) {
+      return { success: false, message: 'Grup bulunamadı.' };
     }
+
+    const groupData = group.toJSON();
+    groupData.memberCount = groupData.members.length;
+
+    return { success: true, message: 'Grup başarıyla getirildi.', group: groupData };
+  } catch (error) {
+    console.error('Error in getGroupById:', error);
+    return { success: false, message: 'Grup getirilirken bir hata oluştu.', error: error.message };
+  }
 };
 
 // Diğer fonksiyonlar aynı kalacak...

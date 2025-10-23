@@ -1,10 +1,6 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
-
-/**
- * Üyelik Başvuru Formu verilerini temsil eden Sequelize Modeli.
- */
-export const Member = sequelize.define('Member', {
+export default (sequelize) => {
+  const Member = sequelize.define('Member', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -123,4 +119,18 @@ export const Member = sequelize.define('Member', {
   // Model seçenekleri
   tableName: 'members', // Veritabanı tablosu adı
   timestamps: true, // createdAt ve updatedAt alanları ekler
-});
+  });
+
+  Member.associate = (models) => {
+    Member.hasMany(models.Debt, {
+      foreignKey: 'memberId',
+      as: 'debts',
+    });
+    Member.belongsTo(models.Group, {
+      foreignKey: 'group_id',
+      as: 'group'
+    });
+  };
+
+  return Member;
+};

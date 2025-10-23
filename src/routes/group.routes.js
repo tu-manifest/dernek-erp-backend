@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // CREATE - Yeni grup oluştur
-router.post("/add-new-group", addNewGroup);
+router.post("/", addNewGroup);
 
 // READ - Tüm grupları getir
 router.get("/", getAllGroups);

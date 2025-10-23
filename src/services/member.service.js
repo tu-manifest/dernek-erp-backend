@@ -1,4 +1,5 @@
-import { Member, Group } from '../models/index.js';
+import db from '../models/index.js';
+const { Member, Group } = db;
 
 // CREATE - Group ID ile üye ekleme
 export const addNewMember = async (memberData) => {

@@ -1,5 +1,6 @@
+
 import express from 'express';
-import * as financeController from '../controllers/finance.controller.js'; // ⭐ DEĞIŞTI
+import financeController from '../controllers/finance.controller.js';
 
 const router = express.Router();
 
