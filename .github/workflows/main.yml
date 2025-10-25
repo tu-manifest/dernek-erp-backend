@@ -180,11 +180,11 @@ jobs:
           
           # 2. EB Uygulama Versiyonu Oluştur
           aws elasticbeanstalk create-application-version \
-            --application-name "DernekERPBackend" \
+            --application-name "Derp-Backend" \
             --version-label "$VERSION_LABEL" \
             --source-bundle S3Bucket="elasticbeanstalk-eu-central-1-579562937843",S3Key="${VERSION_LABEL}.zip"
             
           # 3. Ortamı Yeni Versiyona Güncelle (Deploy et)
           aws elasticbeanstalk update-environment \
-            --environment-name "DernekErpBackend-env" \
+            --environment-name "Derp-Backend-env" \
             --version-label "$VERSION_LABEL"
