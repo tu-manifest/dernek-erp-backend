@@ -14,7 +14,9 @@ permissions:
   id-token: write
 
 jobs:
+  # ===================================================
   # AŞAMA 1: KOD KALİTESİ KONTROLÜ
+  # ===================================================
   code-quality:
     runs-on: ubuntu-latest
     steps:
@@ -24,34 +26,27 @@ jobs:
       - name: Node.js Ortamını Kur
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x' # İhtiyacınıza göre sürümü ayarlayın
+          node-version: '20.x'
           cache: 'npm'
 
       - name: Bağımlılıkları Kur
-        run: npm ci # 'npm install' yerine temiz kurulum için 'npm ci' önerilir
+        run: npm ci
 
       - name: Lint ve Format Kontrolü (ESLint)
-        # Projenizde 'lint' veya benzer bir betik (script) tanımlı olmalıdır
-        run: npm run lint # Örn: "lint": "eslint ."
-        continue-on-error: true # Hata durumunda bile diğer adımların çalışmasına izin verir
+        run: npm run lint
+        continue-on-error: true
 
       - name: Formatlama (Prettier/Vs. Otomatik Düzeltme)
-        id: format-check # ⭐ YENİ: Bu adımı tanımlıyoruz
+        id: format-check
         run: |
-          # Projenizde 'format' betiği varsa burayı etkinleştirin:
-          # npm run format
           echo "Formatlama adımı atlandı. Projenizde 'npm run format' betiği varsa buraya ekleyin."
 
-
       - name: Testleri Çalıştır (Opsiyonel)
-        # Eğer projenizde unit/entegrasyon testleri varsa buraya ekleyin
         run: npm test || echo "Testler bulunamadı veya çalıştırılamadı."
         continue-on-error: true
 
-
       - name: Format Değişikliklerini Commit Et
-        # Formatlama adımı çalıştıysa ve değişiklik yaptıysa geri commit eder
-        if: always() && steps.format-check.outcome == 'success' # ✅ DÜZELTİLMİŞ SATIR
+        if: always() && steps.format-check.outcome == 'success'
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
@@ -61,8 +56,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
+  # ===================================================
   # AŞAMA 2: SECURITY SCAN
+  # ===================================================
   security-scan:
     runs-on: ubuntu-latest
     needs: code-quality
@@ -80,14 +76,15 @@ jobs:
         run: npm ci
 
       - name: Dependency Scan (npm audit)
-        run: npm audit --audit-level=critical # Kritik seviyedeki açıkları kontrol et
-        continue-on-error: true # CI/CD hattını kesmemek için
+        run: npm audit --audit-level=critical
+        continue-on-error: true
 
+  # ===================================================
   # AŞAMA 3: DOCKER BUILD VE PUSH
+  # ===================================================
   build-and-push-docker:
     needs: [code-quality, security-scan]
     runs-on: ubuntu-latest
-    # Sadece 'main' dalına yapılan 'push' olaylarında çalışır. 'develop' için de ekleyebilirsiniz.
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
@@ -124,15 +121,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-# AŞAMA 4: AWS DEPLOY (Elastic Beanstalk)
+
+  # ===================================================
+  # AŞAMA 4: AWS DEPLOY (Elastic Beanstalk)
+  # ===================================================
   aws-deploy:
-    # Bu aşamanın çalışması için önceki aşamaların başarılı olması gerekir
-    needs: [code-quality, security-scan] 
+    needs: [code-quality, security-scan]
     runs-on: ubuntu-latest
-    
-    # Sadece 'main' dalına yapılan 'push' olaylarında otomatik deploy yap
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+
     steps:
       - name: Kodu Klonla
         uses: actions/checkout@v4.1.7
@@ -143,26 +140,26 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
 
-      - name: Bağımlılıkları Kur (Migration için)
-        run: npm ci 
-      
+      - name: Bağımlılıkları Kur
+        run: npm ci
+
       # ===================================================
-      # ADIM 1: VERİTABANI MIGRATION'LARI ÇALIŞTIRMA (DB Güncelleme)
+      # ADIM 1: VERİTABANI MIGRATION'LARI ÇALIŞTIRMA
       # ===================================================
       - name: Run Database Migrations (PostgreSQL)
-        # Projenin migration betiğini buraya yazın (Örn: npx knex migrate:latest)
-        run: npm run migrate:latest # Örnek komut
+        run: npm run migrate
         env:
-          # DB Bilgilerini GitHub Secrets'tan al
+          NODE_ENV: production
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+
       # ===================================================
-      # ADIM 2: DEPLOY PAKETİNİ HAZIRLA (ZIP)
+      # ADIM 2: DEPLOY PAKETİNİ HAZIRLA
       # ===================================================
       - name: Create deployment package (ZIP)
-        # ZIP komutu: node_modules, .git ve .github klasörlerini hariç tutar
         run: zip -r deploy_package.zip . -x "node_modules/*" ".git/*" ".github/*"
 
       # ===================================================
@@ -171,17 +168,18 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          # IAM Kullanıcısı Access Key ve Secret Key
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1 # Frankfurt'u kullanıyorsanız değiştirin
+          aws-region: eu-central-1
 
       - name: Deploy to AWS Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v20
         with:
-          application_name: "dernek-erp-backend" # Elastic Beanstalk uygulama adı
-          environment_name: "DernekErpBackend-env" # Elastic Beanstalk ortam adı
-          version_label: "deploy-${{ github.sha }}" # Sürüm etiketi (commit SHA)
-          region: "eu-central-1" # AWS bölgesi
-          bucket_key: "deploy_package.zip" # S3 içindeki dosya adı
-          deployment_package: "deploy_package.zip" # Oluşturulan ZIP dosyası
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: "dernek-erp-backend"
+          environment_name: "DernekErpBackend-env"
+          version_label: "deploy-${{ github.sha }}"
+          region: "eu-central-1"
+          bucket_key: "deploy_package.zip"
+          deployment_package: "deploy_package.zip"
