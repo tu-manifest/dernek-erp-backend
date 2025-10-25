@@ -122,7 +122,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ===================================================
+ # ===================================================
   # AŞAMA 4: AWS DEPLOY (Elastic Beanstalk)
   # ===================================================
   aws-deploy:
@@ -140,46 +140,51 @@ jobs:
           node-version: '20.x'
           cache: 'npm'
 
+      # Bağımlılıklar burada kurulur, migration işlemi artık EB sunucusunda yapılacaktır.
       - name: Bağımlılıkları Kur
         run: npm ci
 
-      # ===================================================
-      # ADIM 1: VERİTABANI MIGRATION'LARI ÇALIŞTIRMA
-      # ===================================================
-      - name: Run Database Migrations (PostgreSQL)
-        run: npm run migrate
-        env:
-          NODE_ENV: production
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_PORT: ${{ secrets.DB_PORT }}
+      # MIGRATION ADIMI KALDIRILDI! Bu işlem artık .ebextensions/01_migrate.config içinde yapılacak.
 
       # ===================================================
-      # ADIM 2: DEPLOY PAKETİNİ HAZIRLA
+      # ADIM 1: DEPLOY PAKETİNİ HAZIRLA (ZIP)
+      # .ebextensions klasörünü de ZIP'e dahil etmeyi unutmayın!
       # ===================================================
       - name: Create deployment package (ZIP)
         run: zip -r deploy_package.zip . -x "node_modules/*" ".git/*" ".github/*"
 
       # ===================================================
-      # ADIM 3: AWS'E BAĞLAN VE DEPLOY ET
+      # ADIM 2: AWS'E BAĞLAN VE CLI YETKİLENDİRMESİ
       # ===================================================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+          aws-region: eu-central-1 # Frankfurt
 
-      - name: Deploy to AWS Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v20
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: "dernek-erp-backend"
-          environment_name: "DernekErpBackend-env"
-          version_label: "deploy-${{ github.sha }}"
-          region: "eu-central-1"
-          bucket_key: "deploy_package.zip"
-          deployment_package: "deploy_package.zip"
+      # ===================================================
+      # ADIM 3: DEPLOY (CLI Komutları ile)
+      # ===================================================
+      - name: Deploy to Elastic Beanstalk via CLI
+        run: |
+          # Uygulama versiyon etiketini oluştur
+          VERSION_LABEL="deploy-${{ github.sha }}"
+          
+          # 1. ZIP dosyasını EB'nin S3 klasörüne yükle
+          # DİKKAT: Aşağıdaki yol, senin bölge ve Hesap ID'ne göre güncellenmeli.
+          S3_BUCKET_PATH="s3://elasticbeanstalk-eu-central-1-SİZİN_HESAP_IDNİZ/${VERSION_LABEL}.zip"
+          
+          echo "Yükleniyor: $S3_BUCKET_PATH"
+          aws s3 cp deploy_package.zip $S3_BUCKET_PATH
+          
+          # 2. EB Uygulama Versiyonu Oluştur
+          aws elasticbeanstalk create-application-version \
+            --application-name "DernekERPBackend" \
+            --version-label "$VERSION_LABEL" \
+            --source-bundle S3Bucket="elasticbeanstalk-eu-central-1-SİZİN_HESAP_IDNİZ",S3Key="${VERSION_LABEL}.zip"
+            
+          # 3. Ortamı Yeni Versiyona Güncelle (Deploy et)
+          aws elasticbeanstalk update-environment \
+            --environment-name "DernekErpBackend-env" \
+            --version-label "$VERSION_LABEL"
