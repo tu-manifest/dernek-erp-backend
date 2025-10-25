@@ -38,34 +38,3 @@ export async function connectDatabase() {
 }
 
 export default sequelize;
-
-// ⭐ Sequelize CLI için CommonJS export (Hybrid)
-// Bu kısım sadece migration çalıştırırken kullanılır
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        development: {
-            username: DB_CONFIG.user,
-            password: DB_CONFIG.password,
-            database: DB_CONFIG.database,
-            host: DB_CONFIG.host,
-            port: DB_CONFIG.port,
-            dialect: 'postgres',
-            logging: console.log
-        },
-        production: {
-            username: process.env.DB_USER,
-            password: process.env.DB_PASSWORD,
-            database: process.env.DB_NAME,
-            host: process.env.DB_HOST,
-            port: process.env.DB_PORT,
-            dialect: 'postgres',
-            dialectOptions: {
-                ssl: {
-                    require: true,
-                    rejectUnauthorized: false
-                }
-            },
-            logging: false
-        }
-    };
-}
