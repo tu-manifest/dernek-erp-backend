@@ -124,3 +124,62 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+# AŞAMA 4: AWS DEPLOY (Elastic Beanstalk)
+  aws-deploy:
+    # Bu aşamanın çalışması için önceki aşamaların başarılı olması gerekir
+    needs: [code-quality, security-scan] 
+    runs-on: ubuntu-latest
+    
+    # Sadece 'main' dalına yapılan 'push' olaylarında otomatik deploy yap
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Kodu Klonla
+        uses: actions/checkout@v4.1.7
+
+      - name: Node.js Ortamını Kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Bağımlılıkları Kur (Migration için)
+        run: npm ci 
+      
+      # ===================================================
+      # ADIM 1: VERİTABANI MIGRATION'LARI ÇALIŞTIRMA (DB Güncelleme)
+      # ===================================================
+      - name: Run Database Migrations (PostgreSQL)
+        # Projenin migration betiğini buraya yazın (Örn: npx knex migrate:latest)
+        run: npm run migrate:latest # Örnek komut
+        env:
+          # DB Bilgilerini GitHub Secrets'tan al
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+      # ===================================================
+      # ADIM 2: DEPLOY PAKETİNİ HAZIRLA (ZIP)
+      # ===================================================
+      - name: Create deployment package (ZIP)
+        # ZIP komutu: node_modules, .git ve .github klasörlerini hariç tutar
+        run: zip -r deploy_package.zip . -x "node_modules/*" ".git/*" ".github/*"
+
+      # ===================================================
+      # ADIM 3: AWS'E BAĞLAN VE DEPLOY ET
+      # ===================================================
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # IAM Kullanıcısı Access Key ve Secret Key
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1 # Frankfurt'u kullanıyorsanız değiştirin
+
+      - name: Deploy to Elastic Beanstalk
+        uses: aws-actions/elasticbeanstalk-deploy@v2
+        with:
+          application_name: derp-backend-env # EB Uygulamanızın Adı
+          environment_name: derp-backend-env # EB Ortam Adınız
+          version_label: ${{ github.sha }} 
+          deployment_package: deploy_package.zip

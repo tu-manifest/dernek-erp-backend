@@ -1,12 +1,25 @@
 import { Sequelize } from 'sequelize';
 
+// ✅ ÖNERİLEN: ORTAM DEĞİŞKENLERİNİ OKU
 const DB_CONFIG = {
-    user: 'dernekuser',
-    password: 'dernekpass',
-    host: 'postgres_db',
-    database: 'dernek_erp_db',
-    port: 5432,
+    host: process.env.DB_HOST, 
+    // Kullanıcı adı
+    user: process.env.DB_USER, 
+    // Şifre
+    password: process.env.DB_PASSWORD, 
+    // Veritabanı adı
+    database: process.env.DB_NAME, 
+    // Port
+    port: process.env.DB_PORT || 5432, 
 };
+
+// Değişkenlerinizin yüklendiğinden emin olmak için bir kontrol ekleyebilirsiniz
+if (!DB_CONFIG.host || !DB_CONFIG.user) {
+    console.error("❌ HATA: DB bağlantı bilgileri (DB_HOST, DB_USER, vb.) ortam değişkenlerinden yüklenemedi.");
+    // Geliştirme ortamında çalışıyorsanız buradan çıkmak yerine default değer kullanabilirsiniz.
+    // Ancak canlı ortamda hata fırlatmak en güvenlisidir.
+}
+
 
 const sequelize = new Sequelize(
     DB_CONFIG.database,
@@ -17,6 +30,12 @@ const sequelize = new Sequelize(
         port: DB_CONFIG.port,
         dialect: 'postgres',
         logging: false,
+        // dialectOptions: {
+        //     ssl: {
+        //         require: true,
+        //         rejectUnauthorized: false 
+        //     }
+        // }
     }
 );
 
