@@ -173,7 +173,7 @@ jobs:
           
           # 1. ZIP dosyasını EB'nin S3 klasörüne yükle
           # DİKKAT: Aşağıdaki yol, senin bölge ve Hesap ID'ne göre güncellenmeli.
-          S3_BUCKET_PATH="s3://elasticbeanstalk-eu-central-1-SİZİN_HESAP_IDNİZ/${VERSION_LABEL}.zip"
+          S3_BUCKET_PATH="s3://elasticbeanstalk-eu-central-1-579562937843/${VERSION_LABEL}.zip"
           
           echo "Yükleniyor: $S3_BUCKET_PATH"
           aws s3 cp deploy_package.zip $S3_BUCKET_PATH
@@ -182,7 +182,7 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name "DernekERPBackend" \
             --version-label "$VERSION_LABEL" \
-            --source-bundle S3Bucket="elasticbeanstalk-eu-central-1-SİZİN_HESAP_IDNİZ",S3Key="${VERSION_LABEL}.zip"
+            --source-bundle S3Bucket="elasticbeanstalk-eu-central-1-579562937843",S3Key="${VERSION_LABEL}.zip"
             
           # 3. Ortamı Yeni Versiyona Güncelle (Deploy et)
           aws elasticbeanstalk update-environment \
