@@ -176,10 +176,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1 # Frankfurt'u kullanıyorsanız değiştirin
 
-      - name: Deploy to Elastic Beanstalk
-        uses: aws-actions/elasticbeanstalk-deploy@v2
+      - name: Deploy to AWS Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v20
         with:
-          application_name: derp-backend-env # EB Uygulamanızın Adı
-          environment_name: derp-backend-env # EB Ortam Adınız
-          version_label: ${{ github.sha }} 
-          deployment_package: deploy_package.zip
+          application_name: "dernek-erp-backend" # Elastic Beanstalk uygulama adı
+          environment_name: "DernekErpBackend-env" # Elastic Beanstalk ortam adı
+          version_label: "deploy-${{ github.sha }}" # Sürüm etiketi (commit SHA)
+          region: "eu-central-1" # AWS bölgesi
+          bucket_key: "deploy_package.zip" # S3 içindeki dosya adı
+          deployment_package: "deploy_package.zip" # Oluşturulan ZIP dosyası
