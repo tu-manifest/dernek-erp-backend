@@ -86,9 +86,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ===================================================
-  # 4️⃣ ECS DEPLOY
-  # ===================================================
+ # ===================================================
+# 4️⃣ ECS DEPLOY
+# ===================================================
   aws-deploy:
     needs: [build-and-push-docker]
     runs-on: ubuntu-latest
@@ -106,6 +106,7 @@ jobs:
       - name: Download existing task definition
         id: download_task_def
         run: |
+          # NOT: describe-task-definition çıktısı direkt dosya sistemine yazılacak
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_TASK_FAMILY }} \
             --query taskDefinition > task-definition.json
@@ -122,15 +123,19 @@ jobs:
         id: register_task
         run: |
           TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file:///dev/stdin \
+            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
+          
+          # Hata giderme: Çıktıyı adımın çıktısı olarak ayarla
+          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT 
         shell: bash
 
       - name: Deploy to ECS Service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ env.TASK_DEF_ARN }}
+          # ARN'yi doğrudan adım çıktısından al
+          task-definition: ${{ steps.register_task.outputs.task_def_arn }} 
           service: ${{ secrets.ECS_SERVICE_NAME }}
           cluster: DernekERP-Cluster
           wait-for-service-stability: true
