@@ -106,29 +106,10 @@ jobs:
       - name: Download and Clean existing task definition
         id: download_task_def
         run: |
-          # Önceki Task Definition'ı indirirken sadece kayıt için gerekli alanları seçiyoruz.
-          # Bu, hata veren 'enableFaultInjection' gibi meta verileri temizler.
+          # Düzeltildi: JMESPath sorgusu tek satıra çekilerek Bad jmespath expression hatası giderildi.
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_TASK_FAMILY }} \
-            --query 'taskDefinition.{ \
-                family: family, \
-                taskRoleArn: taskRoleArn, \
-                executionRoleArn: executionRoleArn, \
-                networkMode: networkMode, \
-                containerDefinitions: containerDefinitions, \
-                volumes: volumes, \
-                placementConstraints: placementConstraints, \
-                requiresCompatibilities: requiresCompatibilities, \
-                cpu: cpu, \
-                memory: memory, \
-                pidMode: pidMode, \
-                ipcMode: ipcMode, \
-                proxyConfiguration: proxyConfiguration, \
-                ephemeralStorage: ephemeralStorage, \
-                inferenceAccelerators: inferenceAccelerators, \
-                tags: tags, \
-                runtimePlatform: runtimePlatform \
-            }' > task-definition.json
+            --query 'taskDefinition.{family:family,taskRoleArn:taskRoleArn,executionRoleArn:executionRoleArn,networkMode:networkMode,containerDefinitions:containerDefinitions,volumes:volumes,placementConstraints:placementConstraints,requiresCompatibilities:requiresCompatibilities,cpu:cpu,memory:memory,pidMode:pidMode,ipcMode:ipcMode,proxyConfiguration:proxyConfiguration,ephemeralStorage:ephemeralStorage,inferenceAccelerators:inferenceAccelerators,tags:tags,runtimePlatform:runtimePlatform}' > task-definition.json
         shell: bash
 
       - name: Render task definition (Update image)
