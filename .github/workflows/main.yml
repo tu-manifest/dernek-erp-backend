@@ -103,13 +103,33 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - name: Download existing task definition
+      - name: Download and Clean existing task definition
         id: download_task_def
         run: |
-          # NOT: describe-task-definition çıktısı direkt dosya sistemine yazılacak
+          # Önceki Task Definition'ı indirirken sadece kayıt için gerekli alanları seçiyoruz.
+          # Bu, hata veren 'enableFaultInjection' gibi meta verileri temizler.
           aws ecs describe-task-definition \
             --task-definition ${{ secrets.ECS_TASK_FAMILY }} \
-            --query taskDefinition > task-definition.json
+            --query 'taskDefinition.{ \
+                family: family, \
+                taskRoleArn: taskRoleArn, \
+                executionRoleArn: executionRoleArn, \
+                networkMode: networkMode, \
+                containerDefinitions: containerDefinitions, \
+                volumes: volumes, \
+                placementConstraints: placementConstraints, \
+                requiresCompatibilities: requiresCompatibilities, \
+                cpu: cpu, \
+                memory: memory, \
+                pidMode: pidMode, \
+                ipcMode: ipcMode, \
+                proxyConfiguration: proxyConfiguration, \
+                ephemeralStorage: ephemeralStorage, \
+                inferenceAccelerators: inferenceAccelerators, \
+                tags: tags, \
+                runtimePlatform: runtimePlatform \
+            }' > task-definition.json
+        shell: bash
 
       - name: Render task definition (Update image)
         id: render-task-def
@@ -119,22 +139,12 @@ jobs:
           container-name: dernek-erp-backend-container
           image: ${{ secrets.ECR_REGISTRY }}/dernek-erp:${{ github.sha }}
 
-      - name: Register new Task Definition
-        id: register_task
-        run: |
-          TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
-          
-          # ARN'yi geçici bir dosyaya yazdır
-          echo "$TASK_DEF_ARN" > new-task-definition-arn.txt
-        shell: bash
-
+      # NOT: Önceki denemelerde TASK_DEF_ARN'yi dosyaya yazma adımı sorun çıkardığı için KULLANILMIYOR.
+      
       - name: Deploy to ECS Service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          # Task ARN'si yerine, GÜNCELLENMİŞ TASK DEFINITION JSON dosyasının yolu veriliyor.
+          # Render edilmiş Task Definition JSON dosya yolunu iletiyoruz.
           task-definition: ${{ steps.render-task-def.outputs.task-definition }} 
           service: ${{ secrets.ECS_SERVICE_NAME }}
           cluster: DernekERP-Cluster
