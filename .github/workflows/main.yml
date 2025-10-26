@@ -42,8 +42,8 @@ jobs:
       # ... (npm audit ve diğer tarama adımları) ...
 
 
-  # ===================================================
-  # AŞAMA 3: DOCKER BUILD VE ECR'A PUSH (GHCR İPTAL EDİLDİ)
+# ===================================================
+  # AŞAMA 3: DOCKER BUILD VE ECR'A PUSH
   # ===================================================
   build-and-push-docker:
     needs: [code-quality, security-scan]
@@ -52,31 +52,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.7
 
-      # 1. AWS YETKİLENDİRME (ECR Login için)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      # ... (AWS Yetkilendirme ve ECR Login Adımları) ...
+      
+      # 1. YENİ ADIM: Buildx Sürücüsünü Kur ve Kullan
+      - name: Set up Docker Buildx (Container Driver)
+        uses: docker/setup-buildx-action@v3.11.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+          # ✅ KRİTİK DEĞİŞİKLİK: Bu, önbellekleme (cache) sorununu çözer
+          driver: docker-container
+          install: true
 
-      # 2. ECR Login
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-        
-      # 3. İmaj Metaverisi Oluştur (Tag'ler)
+      # 2. İmaj Metaverisi Oluştur (Mevcut hali)
       - name: Set up Docker metadata
         id: meta
         uses: docker/metadata-action@v5.5.1
         with:
-          # Kendi ECR deponuzun adını kullanın
-          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend 
+          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
             
-      # 4. Docker Build ve Push
+      # 3. Docker Build ve Push (Mevcut hali)
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6.7.0
         with:
@@ -84,9 +80,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Cache komutları bu sürücüyle artık sorunsuz çalışacaktır
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
 
   # ===================================================
   # AŞAMA 4: AWS ECS FARGATE DEPLOY
