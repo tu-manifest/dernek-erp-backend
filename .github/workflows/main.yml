@@ -112,13 +112,20 @@ jobs:
             --query 'taskDefinition.{family:family,taskRoleArn:taskRoleArn,executionRoleArn:executionRoleArn,networkMode:networkMode,containerDefinitions:containerDefinitions,volumes:volumes,placementConstraints:placementConstraints,requiresCompatibilities:requiresCompatibilities,cpu:cpu,memory:memory,pidMode:pidMode,ipcMode:ipcMode,proxyConfiguration:proxyConfiguration,ephemeralStorage:ephemeralStorage,inferenceAccelerators:inferenceAccelerators,tags:tags,runtimePlatform:runtimePlatform}' > task-definition.json
         shell: bash
 
-      - name: Render task definition (Update image)
+      - name: Render task definition (Update image and DB Config)
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
           container-name: dernek-erp-backend-container
           image: ${{ secrets.ECR_REGISTRY }}/dernek-erp:${{ github.sha }}
+          # DB HOST ve diğer bilgileri ENVIRONMENT VARIABLES olarak ekliyoruz
+          environment-variables: |
+            DATABASE_HOST=${{ secrets.DB_ENDPOINT_ADDRESS }}
+            DATABASE_USER=${{ secrets.DB_USERNAME }}
+            DATABASE_PASS=${{ secrets.DB_PASSWORD }}
+            DATABASE_NAME=${{ secrets.DB_NAME }}
+            DATABASE_PORT=5432 # Varsayılan PostgreSQL portu
 
       # NOT: Önceki denemelerde TASK_DEF_ARN'yi dosyaya yazma adımı sorun çıkardığı için KULLANILMIYOR.
       
