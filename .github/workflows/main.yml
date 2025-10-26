@@ -86,7 +86,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
- # ===================================================
+# ===================================================
 # 4️⃣ ECS DEPLOY
 # ===================================================
   aws-deploy:
@@ -122,15 +122,15 @@ jobs:
       - name: Register new Task Definition
         id: register_task
         run: |
+          # 1. Yeni Task Definition'ı kaydet ve ARN'yi al
           TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           
-          # Hata giderme: Çıktıyı adımın çıktısı olarak ayarla
-          echo "task_def_arn=$TASK_DEF_ARN" >> $GITHUB_OUTPUT 
+          # 2. ARN'yi bir dosyaya yaz (aksiyonun dosya yolu beklemesini garanti etmek için)
+          echo "$TASK_DEF_ARN" > new-task-definition-arn.txt
         shell: bash
-
       - name: Deploy to ECS Service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
