@@ -125,7 +125,7 @@ jobs:
             DATABASE_USER=${{ secrets.DB_USER }}
             DATABASE_PASS=${{ secrets.DB_PASSWORD }}
             DATABASE_NAME=${{ secrets.DB_NAME }}
-            DATABASE_PORT=5432 # Varsayılan PostgreSQL portu
+            DATABASE_PORT=5432
 
       # NOT: Önceki denemelerde TASK_DEF_ARN'yi dosyaya yazma adımı sorun çıkardığı için KULLANILMIYOR.
       
