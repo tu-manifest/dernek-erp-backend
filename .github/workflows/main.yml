@@ -122,20 +122,20 @@ jobs:
       - name: Register new Task Definition
         id: register_task
         run: |
-          # 1. Yeni Task Definition'ı kaydet ve ARN'yi al
           TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
           
-          # 2. ARN'yi bir dosyaya yaz (aksiyonun dosya yolu beklemesini garanti etmek için)
+          # ARN'yi geçici bir dosyaya yazdır
           echo "$TASK_DEF_ARN" > new-task-definition-arn.txt
         shell: bash
+
       - name: Deploy to ECS Service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          # ARN'yi doğrudan adım çıktısından al
-          task-definition: ${{ steps.register_task.outputs.task_def_arn }} 
+          # Aksiyona ARN'nin bulunduğu dosyanın yolunu ver
+          task-definition: new-task-definition-arn.txt 
           service: ${{ secrets.ECS_SERVICE_NAME }}
           cluster: DernekERP-Cluster
           wait-for-service-stability: true
