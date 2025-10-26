@@ -7,7 +7,7 @@ import { Server } from 'socket.io';
 dotenv.config();
 app.use(express.json());
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT
 
 const httpServer = createServer(app);
 
@@ -33,6 +33,6 @@ io.on('connection', (socket) => {
 setupWhatsApp(io);
 
 httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server çalışıyor: http://192.168.1.37:${PORT}`);
+  console.log(`✅ Server çalışıyor: ${PORT}`);
   console.log(`✅ Socket.IO aktif`);
 });
