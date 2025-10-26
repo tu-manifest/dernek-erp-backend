@@ -51,8 +51,18 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
+            # AWS kimlik bilgilerini ekle
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
 
-      # ... (AWS Yetkilendirme ve ECR Login Adımları) ...
+      # ECR login
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
       
       # 1. YENİ ADIM: Buildx Sürücüsünü Kur ve Kullan
       - name: Set up Docker Buildx (Container Driver)
@@ -67,7 +77,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5.5.1
         with:
-          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend
+          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
@@ -120,7 +130,7 @@ jobs:
           # Task Definition'da tanımlanan konteyner adı
           container-name: dernek-erp-backend-container 
           # ECR URI ve yeni SHA etiketi
-          image: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend:${{ github.sha }} 
+          image: ${{ secrets.ECR_REGISTRY }}/dernek-erp:${{ github.sha }} 
           
       # 4. YENİ TASK DEFINITION'I KAYDET
       - name: Register new Task Definition
