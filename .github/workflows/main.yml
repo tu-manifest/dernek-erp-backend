@@ -8,11 +8,11 @@ on:
 
 permissions:
   contents: read
-  id-token: write # AWS OIDC/Yetkilendirme için Gerekli
+  id-token: write
 
 jobs:
   # ===================================================
-  # AŞAMA 1: KOD KALİTESİ
+  # 1️⃣ KOD KALİTESİ
   # ===================================================
   code-quality:
     runs-on: ubuntu-latest
@@ -29,10 +29,8 @@ jobs:
       - name: Bağımlılıkları Kur
         run: npm ci
 
-      # Burada lint/test adımları olabilir...
-
   # ===================================================
-  # AŞAMA 2: SECURITY SCAN
+  # 2️⃣ SECURITY SCAN
   # ===================================================
   security-scan:
     runs-on: ubuntu-latest
@@ -40,10 +38,10 @@ jobs:
     if: github.event_name == 'schedule' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
-      # ... npm audit vs.
+      # npm audit veya trivy eklenebilir
 
   # ===================================================
-  # AŞAMA 3: DOCKER BUILD VE ECR PUSH
+  # 3️⃣ DOCKER BUILD & PUSH
   # ===================================================
   build-and-push-docker:
     needs: [code-quality, security-scan]
@@ -89,13 +87,12 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ===================================================
-  # AŞAMA 4: AWS ECS FARGATE DEPLOY
+  # 4️⃣ ECS DEPLOY
   # ===================================================
   aws-deploy:
     needs: [build-and-push-docker]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
     steps:
       - uses: actions/checkout@v4.1.7
 
@@ -113,7 +110,7 @@ jobs:
             --task-definition ${{ secrets.ECS_TASK_FAMILY }} \
             --query taskDefinition > task-definition.json
 
-      - name: Render task definition
+      - name: Render task definition (Update image)
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
@@ -124,17 +121,17 @@ jobs:
       - name: Register new Task Definition
         id: register_task
         run: |
-          echo '${{ steps.render-task-def.outputs.task-definition }}' > new-task-def.json
-            aws ecs register-task-definition \
-            --cli-input-json file://new-task-def.json \
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
             --query 'taskDefinition.taskDefinitionArn' \
-            --output text > task-def-arn.txt
+            --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
         shell: bash
 
-      - name: Deploy to ECS service
+      - name: Deploy to ECS Service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: $(cat task-def-arn.txt)
+          task-definition: ${{ env.TASK_DEF_ARN }}
           service: ${{ secrets.ECS_SERVICE_NAME }}
           cluster: DernekERP-Cluster
           wait-for-service-stability: true
