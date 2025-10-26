@@ -128,5 +128,5 @@ jobs:
           # Render edilmiş Task Definition JSON dosya yolunu iletiyoruz.
           task-definition: ${{ steps.render-task-def.outputs.task-definition }} 
           service: ${{ secrets.ECS_SERVICE_NAME }}
-          cluster: DernekERP-Cluster
+          cluster: test-cluster
           wait-for-service-stability: true
