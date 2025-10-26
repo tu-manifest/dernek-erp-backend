@@ -77,7 +77,6 @@ export const initializeClient = () => {
     return clientInstance;
 };
 
-// ...existing code...
 export const getClient = () => clientInstance;
 export const isClientReady = () => clientReady;
 
