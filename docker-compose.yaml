@@ -7,9 +7,6 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dernekpass
-      POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -21,8 +18,6 @@ services:
       dockerfile: Dockerfile
     container_name: dernek-erp-api
     restart: always
-    # Nodemon'a artık gerek kalmadığı için standart çalıştırma komutunu kullanıyoruz.
-    # Bu, Dockerfile'daki CMD'yi geçersiz kılar.
     command: npm start 
     ports:
       - "8000:8000"
