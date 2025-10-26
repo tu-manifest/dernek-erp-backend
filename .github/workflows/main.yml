@@ -30,9 +30,8 @@ jobs:
 
       - name: Bağımlılıkları Kur
         run: npm ci
-
-      # Lint, Format ve Test adımları burada yer alır...
-
+      # ... (Lint, Format ve Test adımları) ...
+      
   security-scan:
     runs-on: ubuntu-latest
     needs: code-quality
@@ -42,7 +41,7 @@ jobs:
       # ... (npm audit ve diğer tarama adımları) ...
 
 
-# ===================================================
+  # ===================================================
   # AŞAMA 3: DOCKER BUILD VE ECR'A PUSH
   # ===================================================
   build-and-push-docker:
@@ -51,7 +50,8 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4.1.7
-            # AWS kimlik bilgilerini ekle
+
+      # 1. AWS YETKİLENDİRME
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -59,30 +59,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      # ECR login
+      # 2. ECR Login (En güvenilir yöntem)
       - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
-      
-      # 1. YENİ ADIM: Buildx Sürücüsünü Kur ve Kullan
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        
+      # 3. Buildx Sürücüsünü Kur
       - name: Set up Docker Buildx (Container Driver)
         uses: docker/setup-buildx-action@v3.11.0
         with:
-          # ✅ KRİTİK DEĞİŞİKLİK: Bu, önbellekleme (cache) sorununu çözer
           driver: docker-container
           install: true
 
-      # 2. İmaj Metaverisi Oluştur (Mevcut hali)
+      # 4. İmaj Metaverisi Oluştur
       - name: Set up Docker metadata
         id: meta
         uses: docker/metadata-action@v5.5.1
         with:
-          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp
+          # ECR URI ve Depo Adı
+          images: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend 
           tags: |
             type=raw,value=${{ github.sha }}
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
             
-      # 3. Docker Build ve Push (Mevcut hali)
+      # 5. Docker Build ve Push
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6.7.0
         with:
@@ -90,7 +90,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Cache komutları bu sürücüyle artık sorunsuz çalışacaktır
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -113,7 +112,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      # 2. TASK DEFINITION'I AL (Deploy etmeden önce güncel halini indiriyoruz)
+      # 2. TASK DEFINITION'I AL
       - name: Download existing task definition
         id: download_task_def
         run: |
@@ -121,30 +120,36 @@ jobs:
             --task-definition ${{ secrets.ECS_TASK_FAMILY }} \
             --query taskDefinition > task-definition.json
 
-      # 3. TASK DEFINITION'I GÜNCELLE (Yeni ECR İmaj Adresini Koyma)
+      # 3. TASK DEFINITION'I GÜNCELLE
       - name: Render task definition
         id: render-task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          # Task Definition'da tanımlanan konteyner adı
           container-name: dernek-erp-backend-container 
-          # ECR URI ve yeni SHA etiketi
-          image: ${{ secrets.ECR_REGISTRY }}/dernek-erp:${{ github.sha }} 
+          image: ${{ secrets.ECR_REGISTRY }}/dernek-erp-backend:${{ github.sha }} 
           
-      # 4. YENİ TASK DEFINITION'I KAYDET
+      # 4. YENİ TASK DEFINITION'I KAYDET (JSON syntax düzeltmesi yapıldı)
       - name: Register new Task Definition
         id: register_task
         run: |
-         echo '${{ steps.render-task-def.outputs.task-definition }}' > new-task-def.json
-         aws ecs register-task-definition \
-         --cli-input-json file://new-task-def.json \
-         --query 'taskDefinition.taskDefinitionArn' --output text
+          # Render aksiyonunun çıktısını alıp Task Definition olarak kaydet
+          echo '{"containerDefinitions":'$(jq '.containerDefinitions | to_entries | map(.value)' ${{ steps.render-task-def.outputs.task-definition }}')'}' > new-task-def.json
+          
+          # HATA GİDERME: AWS CLI'ın kabul etmediği gereksiz alanları temizle
+          cat new-task-def.json | jq 'del(.status, .requiresAttributes, .compatibilities, .revision, .registeredAt, .deregisteredAt, .registeredBy)' > cleaned-task-def.json
+
+          # Yeni Task Definition'ı kaydet
+          TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://cleaned-task-def.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "task-definition-arn=$TASK_ARN" >> $GITHUB_OUTPUT # Çıktıyı sonraki adıma aktar
 
       # 5. ECS SERVİSİNİ GÜNCELLE VE DEPLOY ET
       - name: Deploy to ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
+          # Önceki adımdan gelen ARN'yi kullan
           task-definition: ${{ steps.register_task.outputs.task-definition-arn }}
           service: ${{ secrets.ECS_SERVICE_NAME }}
           cluster: DernekERP-Cluster
