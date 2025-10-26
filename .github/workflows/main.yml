@@ -125,7 +125,7 @@ jobs:
         id: register_task
         run: |
           echo '${{ steps.render-task-def.outputs.task-definition }}' > new-task-def.json
-          aws ecs register-task-definition \
+            aws ecs register-task-definition \
             --cli-input-json file://new-task-def.json \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text > task-def-arn.txt
