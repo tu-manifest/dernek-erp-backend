@@ -3,25 +3,26 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const DB_CONFIG = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'dernekuser',
-    password: process.env.DB_PASSWORD || 'dernekpass',
-    database: process.env.DB_NAME || 'dernek_erp_db',
-    port: process.env.DB_PORT || 5432,
+const config = {
+  host: process.env.DATABASE_HOST || 'localhost', // 'localhost' yerine DB_HOST'u okumalı
+  port: process.env.DATABASE_PORT || 5432,
+  username: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASS,
+  database: process.env.DATABASE_NAME,
+  dialect: 'postgres',
 };
 
-if (!DB_CONFIG.host || !DB_CONFIG.user) {
+if (!config.host || !config.username) {
     console.error("❌ HATA: DB bağlantı bilgileri ortam değişkenlerinden yüklenemedi.");
 }
 
 const sequelize = new Sequelize(
-    DB_CONFIG.database,
-    DB_CONFIG.user,
-    DB_CONFIG.password,
+    config.database,
+    config.username,
+    config.password,
     {
-        host: DB_CONFIG.host,
-        port: DB_CONFIG.port,
+        host: config.host,
+        port: config.port,
         dialect: 'postgres',
         logging: false,
     }
