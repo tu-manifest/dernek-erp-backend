@@ -122,10 +122,9 @@ jobs:
         id: register_task
         run: |
           TASK_DEF_ARN=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.render-task-def.outputs.task-definition }} \
+            --cli-input-json file:///dev/stdin \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
-          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
         shell: bash
 
       - name: Deploy to ECS Service
