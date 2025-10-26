@@ -34,16 +34,13 @@ export const initializeClient = () => {
 
     // QR Kod oluşturulduğunda frontend'e gönder
     clientInstance.on('qr', (qr) => {
-        console.log('----------------------------------------------------');
-        console.log('WHATSAPP QR KODU OLUŞTURULDU - Frontend\'e gönderiliyor...');
-        console.log('----------------------------------------------------');
-        
+       
         clientReady = false;
         
         // Socket.IO ile QR kodunu frontend'e gönder
         if (io) {
             io.emit('whatsapp-qr', { qr });
-            console.log('✅ QR kodu Socket.IO ile gönderildi');
+
         }
     });
 

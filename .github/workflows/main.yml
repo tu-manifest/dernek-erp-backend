@@ -121,8 +121,8 @@ jobs:
           image: ${{ secrets.ECR_REGISTRY }}/dernek-erp:${{ github.sha }}
           # DB HOST ve diğer bilgileri ENVIRONMENT VARIABLES olarak ekliyoruz
           environment-variables: |
-            DATABASE_HOST=${{ secrets.DB_ENDPOINT_ADDRESS }}
-            DATABASE_USER=${{ secrets.DB_USERNAME }}
+            DATABASE_HOST=${{ secrets.DB_HOST }}
+            DATABASE_USER=${{ secrets.DB_USER }}
             DATABASE_PASS=${{ secrets.DB_PASSWORD }}
             DATABASE_NAME=${{ secrets.DB_NAME }}
             DATABASE_PORT=5432 # Varsayılan PostgreSQL portu
