@@ -136,9 +136,10 @@ jobs:
       - name: Register new Task Definition
         id: register_task
         run: |
-          aws ecs register-task-definition \
-            --cli-input-json file://task-definition.json \
-            --query 'taskDefinition.taskDefinitionArn' --output text
+         echo '${{ steps.render-task-def.outputs.task-definition }}' > new-task-def.json
+         aws ecs register-task-definition \
+         --cli-input-json file://new-task-def.json \
+         --query 'taskDefinition.taskDefinitionArn' --output text
 
       # 5. ECS SERVİSİNİ GÜNCELLE VE DEPLOY ET
       - name: Deploy to ECS service
