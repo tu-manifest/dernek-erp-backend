@@ -7,15 +7,14 @@ services:
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: dernekuser
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: dernekpass
-      POSTGRES_DB: dernek_erp_db
+      POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
-  # 2. Node.js API Servisi (Watch Mode Eklendi)
   api:
     build:
       context: .
