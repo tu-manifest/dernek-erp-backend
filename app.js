@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import sequelize from './src/config/database.js';
 import routes from './src/routes/index.js';
+import models from './src/models/index.js';
 import { initializeClient, setSocketIO } from './src/utils/whatsappClient.js';
 
 const app = express();
@@ -34,6 +35,7 @@ export const setupWhatsApp = (io) => {
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Sequelize veritabanı bağlantısı başarılı!');
+    return models.sequelize.sync({alter: true })
   })
   .catch(err => {
     console.error('❌ Veritabanı bağlantısı başarısız:', err);
