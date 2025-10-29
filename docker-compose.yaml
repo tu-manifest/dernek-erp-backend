@@ -7,6 +7,9 @@ services:
     container_name: postgres_db
     restart: always
     environment:
+      POSTGRES_USER: dernekuser
+      POSTGRES_PASSWORD: dernekpass
+      POSTGRES_DB: dernek_erp_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
