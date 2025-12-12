@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
 import db from '../models/index.js';
+import { AppError } from '../middlewares/errorHandler.js';
+import { ERROR_MESSAGES, HTTP_STATUS, formatErrorMessage } from '../constants/errorMessages.js';
 
 /**
  * Tüm borçluları (Üye ve Dış Borçluları) arama
@@ -40,7 +42,7 @@ export const getDebtDetails = async (debtId) => {
   });
   
   if (!debt) {
-      throw new Error('Debt not found');
+    throw new AppError(ERROR_MESSAGES.FINANCE.DEBT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   
   const debtorName = debt.debtorType === 'MEMBER' 
@@ -68,7 +70,7 @@ export const getDebtDetails = async (debtId) => {
  */
 export const addDebt = async (data) => {
     if (data.memberId && data.externalDebtorId) {
-        throw new Error("Debt must belong to either a MEMBER or an EXTERNAL debtor, not both.");
+        throw new AppError(ERROR_MESSAGES.FINANCE.BOTH_DEBTOR_NOT_ALLOWED, HTTP_STATUS.BAD_REQUEST);
     }
     
     let debtorType;
@@ -77,7 +79,7 @@ export const addDebt = async (data) => {
     } else if (data.externalDebtorId) {
         debtorType = 'EXTERNAL';
     } else {
-        throw new Error("Debtor must be selected.");
+        throw new AppError(ERROR_MESSAGES.FINANCE.DEBTOR_REQUIRED, HTTP_STATUS.BAD_REQUEST);
     }
 
     return db.Debt.create({
@@ -95,13 +97,17 @@ export const recordCollection = async (debtId, amountPaid, paymentMethod, receip
   const debt = await db.Debt.findByPk(debtId);
 
   if (!debt) {
-    throw new Error('Debt not found');
+    throw new AppError(ERROR_MESSAGES.FINANCE.DEBT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   const outstandingAmount = parseFloat(debt.amount) - parseFloat(debt.collectedAmount);
   
   if (parseFloat(amountPaid) > outstandingAmount) {
-      throw new Error(`Amount paid (${amountPaid}) exceeds outstanding balance (${outstandingAmount}).`);
+    const message = formatErrorMessage(ERROR_MESSAGES.FINANCE.PAYMENT_EXCEEDS_DEBT, {
+      amountPaid,
+      outstanding: outstandingAmount.toFixed(2)
+    });
+    throw new AppError(message, HTTP_STATUS.BAD_REQUEST);
   }
 
   await db.Collection.create({

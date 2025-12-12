@@ -1,43 +1,31 @@
 import * as whatsappService from '../services/whatsapp.service.js';
+import { asyncHandler } from '../middlewares/errorHandler.js';
+import { AppError } from '../middlewares/errorHandler.js';
+import { ERROR_MESSAGES, HTTP_STATUS } from '../constants/errorMessages.js';
 
 // Duyuru gönderme işlemi
-export const sendAnnouncement = async (req, res) => {
-    try {
-        const { aliciListesi, mesajIcerigi } = req.body;
+export const sendAnnouncement = asyncHandler(async (req, res) => {
+  const { aliciListesi, mesajIcerigi } = req.body;
 
-        if (!aliciListesi || aliciListesi.length === 0 || !mesajIcerigi) {
-            return res.status(400).json({ success: false, message: 'Alıcı listesi veya mesaj içeriği eksik.' });
-        }
-        
-        const result = await whatsappService.sendAnnouncement(aliciListesi, mesajIcerigi);
-
-        res.json({ success: true, ...result });
-    } catch (error) {
-        // Servisten gelen "Hazır Değil" hatasını yakala
-        if (error.message.includes('Hazır Değil')) {
-             return res.status(503).json({ success: false, message: error.message });
-        }
-        console.error('Duyuru Gönderilirken Hata:', error);
-        res.status(500).json({ success: false, message: 'Sunucu Hatası.' });
-    }
-};
+  if (!aliciListesi || aliciListesi.length === 0) {
+    throw new AppError(ERROR_MESSAGES.WHATSAPP.RECIPIENTS_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+  }
+  if (!mesajIcerigi) {
+    throw new AppError(ERROR_MESSAGES.WHATSAPP.MESSAGE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+  }
+  
+  const result = await whatsappService.sendAnnouncement(aliciListesi, mesajIcerigi);
+  res.json({ success: true, ...result });
+});
 
 // Grup listesini çekme işlemi
-export const listGroups = async (req, res) => {
-    try {
-        const groups = await whatsappService.listGroups();
-        res.json({ success: true, groups });
-    } catch (error) {
-        if (error.message.includes('Hazır Değil')) {
-             return res.status(503).json({ success: false, message: error.message });
-        }
-        console.error('Grup Listesi Çekilirken Hata:', error);
-        res.status(500).json({ success: false, message: 'Sunucu Hatası.' });
-    }
-};
+export const listGroups = asyncHandler(async (req, res) => {
+  const groups = await whatsappService.listGroups();
+  res.json({ success: true, groups });
+});
 
 // İstemci durumunu çekme
-export const getStatus = async (req, res) => {
-    const status = whatsappService.getStatus();
-    res.json(status);
-};
+export const getStatus = asyncHandler(async (req, res) => {
+  const status = whatsappService.getStatus();
+  res.json(status);
+});

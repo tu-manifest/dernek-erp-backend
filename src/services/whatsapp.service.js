@@ -1,4 +1,6 @@
 import { isClientReady, sendMessage, getGroups, getClient } from '../utils/whatsappClient.js';
+import { AppError } from '../middlewares/errorHandler.js';
+import { ERROR_MESSAGES, HTTP_STATUS, formatErrorMessage } from '../constants/errorMessages.js';
 
 /**
  * WhatsApp istemcisinin mevcut durumunu döndürür.
@@ -17,7 +19,7 @@ export const getStatus = () => {
  */
 export const sendAnnouncement = async (aliciListesi, mesajIcerigi) => {
     if (!isClientReady()) {
-        throw new Error('WhatsApp İstemcisi Hazır Değil veya Oturum Açılmamış.');
+        throw new AppError(ERROR_MESSAGES.WHATSAPP.NOT_READY, HTTP_STATUS.SERVICE_UNAVAILABLE);
     }
 
     const gonderimSonuclari = [];
@@ -37,5 +39,8 @@ export const sendAnnouncement = async (aliciListesi, mesajIcerigi) => {
  * Bağlı olunan tüm grupların listesini çeker.
  */
 export const listGroups = async () => {
+    if (!isClientReady()) {
+        throw new AppError(ERROR_MESSAGES.WHATSAPP.NOT_READY, HTTP_STATUS.SERVICE_UNAVAILABLE);
+    }
     return await getGroups();
 };

@@ -5,6 +5,7 @@ import sequelize from './src/config/database.js';
 import routes from './src/routes/index.js';
 import models from './src/models/index.js';
 import { initializeClient, setSocketIO } from './src/utils/whatsappClient.js';
+import { errorHandler, notFoundHandler } from './src/middlewares/errorHandler.js';
 
 const app = express();
 
@@ -25,13 +26,19 @@ app.use(express.json());
 // 4️⃣ Rotalar
 app.use('/api', routes);
 
-// 5️⃣ Socket.IO'yu export et (server.js'den set edilecek)
+// 5️⃣ 404 Handler (Rotalardan sonra)
+app.use(notFoundHandler);
+
+// 6️⃣ Error Handler (En son)
+app.use(errorHandler);
+
+// 7️⃣ Socket.IO'yu export et (server.js'den set edilecek)
 export const setupWhatsApp = (io) => {
     setSocketIO(io);
     initializeClient();
 };
 
-// 6️⃣ Sequelize bağlantı testi
+// 8️⃣ Sequelize bağlantı testi
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Sequelize veritabanı bağlantısı başarılı!');
