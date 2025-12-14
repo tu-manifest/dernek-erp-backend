@@ -6,9 +6,11 @@ import eventRoutes from './event.routes.js';
 import financeRoutes from './finance.routes.js';
 import donationRoutes from './donation.routes.js';
 import donorRoutes from './donor.routes.js';
+import authRoutes from './auth.routes.js';
 
 const router = express.Router();
 
+router.use("/auth", authRoutes);
 router.use("/members", memberRoutes);
 router.use("/groups", groupRoutes);
 router.use("/whatsapp", whatsappRoutes);
@@ -18,3 +20,4 @@ router.use("/donations", donationRoutes);
 router.use("/donors", donorRoutes);
 
 export default router;
+

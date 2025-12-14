@@ -4,16 +4,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const config = {
-  host: process.env.DATABASE_HOST || 'localhost', // 'localhost' yerine DB_HOST'u okumalı
-  port: process.env.DATABASE_PORT || 5432,
-  username: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASS,
-  database: process.env.DATABASE_NAME,
-  dialect: 'postgres',
+    host: process.env.DB_HOST || 'db',   // 🔥 localhost ASLA
+    port: process.env.DB_PORT || 5432,
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    dialect: 'postgres',
 };
 
-if (!config.host || !config.username) {
-    console.error("❌ HATA: DB bağlantı bilgileri ortam değişkenlerinden yüklenemedi.");
+if (!config.host || !config.username || !config.database) {
+    console.error('❌ HATA: DB ortam değişkenleri eksik!', config);
 }
 
 const sequelize = new Sequelize(
@@ -31,9 +31,9 @@ const sequelize = new Sequelize(
 export async function connectDatabase() {
     try {
         await sequelize.authenticate();
-        console.log('✅ Sequelize bağlantısı (PostgreSQL) başarılı!');
+        console.log('✅ PostgreSQL bağlantısı başarılı');
     } catch (error) {
-        console.error('❌ Veritabanı bağlantısı BAŞARISIZ oldu:', error.message);
+        console.error('❌ PostgreSQL bağlantı hatası:', error.message);
         throw error;
     }
 }

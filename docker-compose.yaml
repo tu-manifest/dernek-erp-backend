@@ -21,11 +21,14 @@ services:
       dockerfile: Dockerfile
     container_name: dernek-erp-api
     restart: always
-    command: npm start 
-    ports:
-      - "8000:8000"
+    command: npm start
     depends_on:
       - db
+
+    # ⚠️ UYGULAMA PORTU (server.js hangi portu dinliyorsa o)
+    ports:
+      - "8000:8080"
+
     environment:
       NODE_ENV: development
       DB_HOST: db
@@ -33,24 +36,22 @@ services:
       DB_USER: dernekuser
       DB_PASSWORD: dernekpass
       DB_NAME: dernek_erp_db
+
     volumes:
-      # node_modules'in host'tan senkronize olmasını engelle (Çok Önemli)
-      - /usr/src/app/node_modules 
-    
-    # Yeni Geliştirme (Develop) Bölümü
+      # ❗ node_modules host'tan ASLA override edilmez
+      - /usr/src/app/node_modules
+
     develop:
       watch:
-        # 1. Kod Dosyalarını Senkronize Etme (Hızlı Değişiklikler İçin)
-        # Lokaldeki her şeyi (.) container içindeki /usr/src/app hedefine anında kopyala.
+        # ✅ SADECE KAYNAK KODU SENKRONİZE ET
         - action: sync
-          path: .
-          target: /usr/src/app
+          path: ./src
+          target: /usr/src/app/src
           ignore:
-            - node_modules/ # Bağımlılıkları senkronize etme
+            - node_modules/
             - .git/
-        
-        # 2. Bağımlılık Dosyaları Değiştiğinde İmajı Yeniden Oluşturma (Rebuild)
-        # package.json değiştiğinde tüm imajı yeniden build et ve servisi baştan başlat.
+
+        # ✅ package.json değişirse image yeniden build edilir
         - action: rebuild
           path: package.json
         - action: rebuild

@@ -13,6 +13,16 @@ export const ERROR_MESSAGES = {
     VALIDATION_ERROR: 'Doğrulama hatası oluştu.',
   },
 
+  // Kimlik Doğrulama Hataları
+  AUTH: {
+    INVALID_CREDENTIALS: 'E-posta veya şifre hatalı.',
+    EMAIL_EXISTS: 'Bu e-posta adresi zaten kayıtlı.',
+    TOKEN_REQUIRED: 'Erişim tokeni gereklidir.',
+    TOKEN_INVALID: 'Geçersiz veya süresi dolmuş token.',
+    UNAUTHORIZED: 'Bu işlem için yetkiniz bulunmamaktadır.',
+    ACCOUNT_INACTIVE: 'Hesabınız aktif değil.',
+  },
+
   // Üye Hataları
   MEMBER: {
     NOT_FOUND: 'Üye bulunamadı.',
@@ -111,12 +121,12 @@ export const ERROR_MESSAGES = {
  */
 export const formatErrorMessage = (message, variables = {}) => {
   let formattedMessage = message;
-  
+
   Object.keys(variables).forEach(key => {
     const regex = new RegExp(`{${key}}`, 'g');
     formattedMessage = formattedMessage.replace(regex, variables[key]);
   });
-  
+
   return formattedMessage;
 };
 
