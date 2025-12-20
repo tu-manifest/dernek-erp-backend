@@ -1,4 +1,4 @@
-// src/models/donation.model.js
+// src/models/donationCampaign.model.js
 import { DataTypes } from 'sequelize';
 
 export default (sequelize) => {
@@ -24,6 +24,11 @@ export default (sequelize) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
+    collectedAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
     description: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -35,6 +40,19 @@ export default (sequelize) => {
     iban: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM('Aktif', 'Tamamlandı', 'Durduruldu'),
+      allowNull: false,
+      defaultValue: 'Aktif',
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   });
 

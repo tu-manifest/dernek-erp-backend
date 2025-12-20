@@ -7,6 +7,8 @@ import financeRoutes from './finance.routes.js';
 import donationRoutes from './donation.routes.js';
 import donorRoutes from './donor.routes.js';
 import authRoutes from './auth.routes.js';
+import campaignRoutes from './campaign.routes.js';
+import virtualBankRoutes from './virtualBank.routes.js';
 
 const router = express.Router();
 
@@ -18,6 +20,9 @@ router.use("/events", eventRoutes);
 router.use("/finance", financeRoutes);
 router.use("/donations", donationRoutes);
 router.use("/donors", donorRoutes);
+router.use("/campaigns", campaignRoutes);
+router.use("/virtual-bank", virtualBankRoutes);
 
 export default router;
+
 

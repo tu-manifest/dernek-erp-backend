@@ -5,7 +5,11 @@ export default (sequelize) => {
   const Donation = sequelize.define('Donation', {
     memberId: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
+    },
+    campaignId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     donationAmount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -18,6 +22,19 @@ export default (sequelize) => {
     description: {
       type: DataTypes.STRING,
       allowNull: true
+    },
+    senderName: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    transactionRef: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    source: {
+      type: DataTypes.ENUM('Manuel', 'Banka', 'Sanal Banka'),
+      allowNull: false,
+      defaultValue: 'Manuel'
     }
   });
 
@@ -25,6 +42,10 @@ export default (sequelize) => {
     Donation.belongsTo(models.Member, {
       foreignKey: 'memberId',
       as: 'member'
+    });
+    Donation.belongsTo(models.DonationCampaign, {
+      foreignKey: 'campaignId',
+      as: 'campaign'
     });
   };
 

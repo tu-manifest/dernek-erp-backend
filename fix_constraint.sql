@@ -1,0 +1,1 @@
+ALTER TABLE "Donations" ALTER COLUMN "memberId" DROP NOT NULL;
