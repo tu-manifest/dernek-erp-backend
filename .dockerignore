@@ -1,0 +1,30 @@
+# Dependencies - container kendi kuracak
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# Test & docs
+*.md
+docs
+coverage

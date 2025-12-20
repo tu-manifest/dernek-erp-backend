@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # 1. PostgreSQL Veritabanı Servisi
   db:
     image: postgres:latest
     container_name: postgres_db
@@ -20,12 +19,13 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: dernek-erp-api
-    restart: always
-    command: npm start
+
+    # 🔥 nodemon çalışacak
+    command: npm run dev
+
     depends_on:
       - db
 
-    # ⚠️ UYGULAMA PORTU (server.js hangi portu dinliyorsa o)
     ports:
       - "8000:8080"
 
@@ -36,27 +36,16 @@ services:
       DB_USER: dernekuser
       DB_PASSWORD: dernekpass
       DB_NAME: dernek_erp_db
+      CHOKIDAR_USEPOLLING: "true"
 
     volumes:
-      # ❗ node_modules host'tan ASLA override edilmez
+      # 🔥 KODU MOUNT ET
+      - .:/usr/src/app
+      # 🔥 node_modules'u container'da koru (Windows binarylerini ezmesin)
       - /usr/src/app/node_modules
 
-    develop:
-      watch:
-        # ✅ SADECE KAYNAK KODU SENKRONİZE ET
-        - action: sync
-          path: ./src
-          target: /usr/src/app/src
-          ignore:
-            - node_modules/
-            - .git/
+    stdin_open: true
+    tty: true
 
-        # ✅ package.json değişirse image yeniden build edilir
-        - action: rebuild
-          path: package.json
-        - action: rebuild
-          path: package-lock.json
-
-# 3. Veri Kalıcılığı için Volume
 volumes:
   postgres_data:

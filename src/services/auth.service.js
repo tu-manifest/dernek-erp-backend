@@ -208,3 +208,142 @@ export const getAdminById = async (adminId) => {
         updatedAt: admin.updatedAt,
     };
 };
+
+/**
+ * Tüm yöneticileri listeler
+ * @returns {Array} Yönetici listesi (şifre hariç)
+ */
+export const getAllAdmins = async () => {
+    const admins = await Admin.findAll({
+        attributes: { exclude: ['password'] },
+        order: [['createdAt', 'DESC']],
+    });
+
+    return admins.map(admin => ({
+        id: admin.id,
+        fullName: admin.fullName,
+        email: admin.email,
+        phone: admin.phone,
+        notes: admin.notes,
+        permissions: {
+            canManageMembers: admin.canManageMembers,
+            canManageDonations: admin.canManageDonations,
+            canManageAdmins: admin.canManageAdmins,
+            canManageEvents: admin.canManageEvents,
+            canManageMeetings: admin.canManageMeetings,
+            canManageSocialMedia: admin.canManageSocialMedia,
+            canManageFinance: admin.canManageFinance,
+            canManageDocuments: admin.canManageDocuments,
+        },
+        isActive: admin.isActive,
+        createdAt: admin.createdAt,
+        updatedAt: admin.updatedAt,
+    }));
+};
+
+/**
+ * Yönetici bilgilerini günceller
+ * @param {number} adminId - Güncellenecek admin ID
+ * @param {Object} updateData - Güncelleme verileri
+ * @returns {Object} Güncellenmiş yönetici bilgisi (şifre hariç)
+ */
+export const updateAdmin = async (adminId, updateData) => {
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+        const error = new Error('Yönetici bulunamadı.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Şifre güncellenmek isteniyorsa hashle
+    if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, SALT_ROUNDS);
+    }
+
+    // E-posta değişiyorsa, benzersizliği kontrol et
+    if (updateData.email && updateData.email !== admin.email) {
+        const existingAdmin = await Admin.findOne({ where: { email: updateData.email } });
+        if (existingAdmin) {
+            const error = new Error('Bu e-posta adresi zaten kayıtlı.');
+            error.statusCode = 409;
+            throw error;
+        }
+    }
+
+    // Güncellenebilir alanlar
+    const allowedFields = [
+        'fullName',
+        'email',
+        'phone',
+        'password',
+        'notes',
+        'canManageMembers',
+        'canManageDonations',
+        'canManageAdmins',
+        'canManageEvents',
+        'canManageMeetings',
+        'canManageSocialMedia',
+        'canManageFinance',
+        'canManageDocuments',
+        'isActive',
+    ];
+
+    // Sadece izin verilen alanları güncelle
+    const filteredData = {};
+    for (const field of allowedFields) {
+        if (updateData[field] !== undefined) {
+            filteredData[field] = updateData[field];
+        }
+    }
+
+    await admin.update(filteredData);
+
+    // Güncellenmiş admin'i şifre hariç döndür
+    return {
+        id: admin.id,
+        fullName: admin.fullName,
+        email: admin.email,
+        phone: admin.phone,
+        notes: admin.notes,
+        permissions: {
+            canManageMembers: admin.canManageMembers,
+            canManageDonations: admin.canManageDonations,
+            canManageAdmins: admin.canManageAdmins,
+            canManageEvents: admin.canManageEvents,
+            canManageMeetings: admin.canManageMeetings,
+            canManageSocialMedia: admin.canManageSocialMedia,
+            canManageFinance: admin.canManageFinance,
+            canManageDocuments: admin.canManageDocuments,
+        },
+        isActive: admin.isActive,
+        createdAt: admin.createdAt,
+        updatedAt: admin.updatedAt,
+    };
+};
+
+/**
+ * Yöneticiyi siler
+ * @param {number} adminId - Silinecek admin ID
+ * @param {number} currentUserId - İşlemi yapan kullanıcının ID'si
+ */
+export const deleteAdmin = async (adminId, currentUserId) => {
+    // Kendini silmeye çalışıyor mu kontrol et
+    if (parseInt(adminId) === parseInt(currentUserId)) {
+        const error = new Error('Kendinizi silemezsiniz.');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+        const error = new Error('Yönetici bulunamadı.');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    await admin.destroy();
+
+    return { message: 'Yönetici başarıyla silindi.' };
+};

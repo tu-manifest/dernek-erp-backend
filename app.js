@@ -29,20 +29,19 @@ app.use('/api', routes);
 // 5️⃣ 404 Handler (Rotalardan sonra)
 app.use(notFoundHandler);
 
-// 6️⃣ Error Handler (En son)
 app.use(errorHandler);
 
 // 7️⃣ Socket.IO'yu export et (server.js'den set edilecek)
 export const setupWhatsApp = (io) => {
-    setSocketIO(io);
-    initializeClient();
+  setSocketIO(io);
+  initializeClient();
 };
 
 // 8️⃣ Sequelize bağlantı testi
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Sequelize veritabanı bağlantısı başarılı!');
-    return models.sequelize.sync({alter: true })
+    return models.sequelize.sync({ alter: true })
   })
   .catch(err => {
     console.error('❌ Veritabanı bağlantısı başarısız:', err);

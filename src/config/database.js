@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const config = {
-    host: process.env.DB_HOST || 'db',   // 🔥 localhost ASLA
+    host: process.env.DB_HOST || 'db',
     port: process.env.DB_PORT || 5432,
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
