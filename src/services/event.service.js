@@ -1,13 +1,175 @@
 import db from '../models/index.js';
+import { Op } from 'sequelize';
 
 const Event = db.Event;
 
+/**
+ * Yeni etkinlik oluştur
+ */
 export const createEvent = async (eventData) => {
-  try {
-    const newEvent = await Event.create(eventData);
-    return newEvent;
-  } catch (error) {
-    console.error("Etkinlik oluşturulurken hata:", error);
+  const newEvent = await Event.create(eventData);
+  return newEvent;
+};
+
+/**
+ * Tüm etkinlikleri getir
+ */
+export const getAllEvents = async () => {
+  const events = await Event.findAll({
+    order: [['date', 'ASC'], ['time', 'ASC']],
+  });
+  return events;
+};
+
+/**
+ * ID'ye göre etkinlik getir
+ */
+export const getEventById = async (id) => {
+  const event = await Event.findByPk(id);
+  if (!event) {
+    const error = new Error('Etkinlik bulunamadı.');
+    error.statusCode = 404;
     throw error;
   }
+  return event;
+};
+
+/**
+ * Etkinlik güncelle
+ */
+export const updateEvent = async (id, eventData) => {
+  const event = await Event.findByPk(id);
+  if (!event) {
+    const error = new Error('Etkinlik bulunamadı.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await event.update(eventData);
+  return event;
+};
+
+/**
+ * Etkinlik sil
+ */
+export const deleteEvent = async (id) => {
+  const event = await Event.findByPk(id);
+  if (!event) {
+    const error = new Error('Etkinlik bulunamadı.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await event.destroy();
+  return { message: 'Etkinlik başarıyla silindi.' };
+};
+
+/**
+ * Dashboard istatistikleri
+ */
+export const getDashboardStats = async () => {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Toplam etkinlik sayısı
+  const totalEvents = await Event.count();
+
+  // Planlanan etkinlikler (bugün veya sonrası)
+  const plannedEvents = await Event.count({
+    where: {
+      status: 'Planlandı',
+    }
+  });
+
+  // Tamamlanan etkinlikler
+  const completedEvents = await Event.count({
+    where: {
+      status: 'Tamamlandı',
+    }
+  });
+
+  // Online etkinlikler
+  const onlineEvents = await Event.count({
+    where: {
+      eventType: 'Online',
+    }
+  });
+
+  // Fiziksel (Offline) etkinlikler
+  const offlineEvents = await Event.count({
+    where: {
+      eventType: 'Fiziksel',
+    }
+  });
+
+  // Yaklaşan etkinlikler (bugün ve sonrası, planlandı durumunda)
+  const upcomingEvents = await Event.findAll({
+    where: {
+      date: {
+        [Op.gte]: today
+      },
+      status: 'Planlandı'
+    },
+    order: [['date', 'ASC'], ['time', 'ASC']],
+    limit: 5
+  });
+
+  return {
+    totalEvents,
+    plannedEvents,
+    completedEvents,
+    onlineEvents,
+    offlineEvents,
+    upcomingEvents
+  };
+};
+
+/**
+ * Etkinlik durumunu güncelle
+ */
+export const updateEventStatus = async (id, status) => {
+  const event = await Event.findByPk(id);
+  if (!event) {
+    const error = new Error('Etkinlik bulunamadı.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await event.update({ status });
+  return event;
+};
+
+/**
+ * Filtrelenmiş etkinlik listesi
+ */
+export const getFilteredEvents = async (filters) => {
+  const where = {};
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.eventType) {
+    where.eventType = filters.eventType;
+  }
+
+  if (filters.startDate && filters.endDate) {
+    where.date = {
+      [Op.between]: [filters.startDate, filters.endDate]
+    };
+  } else if (filters.startDate) {
+    where.date = {
+      [Op.gte]: filters.startDate
+    };
+  } else if (filters.endDate) {
+    where.date = {
+      [Op.lte]: filters.endDate
+    };
+  }
+
+  const events = await Event.findAll({
+    where,
+    order: [['date', 'ASC'], ['time', 'ASC']],
+  });
+
+  return events;
 };

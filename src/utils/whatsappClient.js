@@ -15,64 +15,90 @@ export const initializeClient = () => {
         return clientInstance;
     }
 
-    clientInstance = new Client({
-        authStrategy: new LocalAuth({ clientId: "client-one" }),
-        puppeteer: {
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu'
-            ],
-            executablePath: '/usr/bin/chromium-browser'
-        }
-    });
+    try {
+        clientInstance = new Client({
+            authStrategy: new LocalAuth({
+                clientId: "client-one",
+                dataPath: '/tmp/.wwebjs_auth' // Container içinde geçici dizin kullan
+            }),
+            puppeteer: {
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--single-process',
+                    '--disable-extensions',
+                    '--disable-background-networking',
+                    '--disable-default-apps',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--hide-scrollbars',
+                    '--metrics-recording-only',
+                    '--mute-audio',
+                    '--no-default-browser-check',
+                    '--safebrowsing-disable-auto-update'
+                ],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser',
+                userDataDir: '/tmp/chromium-user-data'
+            }
+        });
 
-    // QR Kod oluşturulduğunda frontend'e gönder
-    clientInstance.on('qr', (qr) => {
-       
-        clientReady = false;
-        
-        // Socket.IO ile QR kodunu frontend'e gönder
-        if (io) {
-            io.emit('whatsapp-qr', { qr });
+        // QR Kod oluşturulduğunda frontend'e gönder
+        clientInstance.on('qr', (qr) => {
 
-        }
-    });
+            clientReady = false;
 
-    clientInstance.on('ready', () => {
-        console.log('✅ WhatsApp Client Hazır ve Bağlandı!');
-        clientReady = true;
-        
-        // Frontend'e hazır durumunu bildir
-        if (io) {
-            io.emit('whatsapp-ready', { status: 'ready' });
-        }
-    });
+            // Socket.IO ile QR kodunu frontend'e gönder
+            if (io) {
+                io.emit('whatsapp-qr', { qr });
 
-    clientInstance.on('auth_failure', msg => {
-        console.error('❌ Kimlik doğrulama hatası:', msg);
-        clientReady = false;
-        
-        if (io) {
-            io.emit('whatsapp-auth-failure', { message: msg });
-        }
-    });
-    
-    clientInstance.on('disconnected', (reason) => {
-        console.warn('⚠️ WhatsApp Client Bağlantısı Kesildi:', reason);
-        clientReady = false;
-        
-        if (io) {
-            io.emit('whatsapp-disconnected', { reason });
-        }
-    });
+            }
+        });
 
-    clientInstance.initialize();
+        clientInstance.on('ready', () => {
+            console.log('✅ WhatsApp Client Hazır ve Bağlandı!');
+            clientReady = true;
+
+            // Frontend'e hazır durumunu bildir
+            if (io) {
+                io.emit('whatsapp-ready', { status: 'ready' });
+            }
+        });
+
+        clientInstance.on('auth_failure', msg => {
+            console.error('❌ Kimlik doğrulama hatası:', msg);
+            clientReady = false;
+
+            if (io) {
+                io.emit('whatsapp-auth-failure', { message: msg });
+            }
+        });
+
+        clientInstance.on('disconnected', (reason) => {
+            console.warn('⚠️ WhatsApp Client Bağlantısı Kesildi:', reason);
+            clientReady = false;
+
+            if (io) {
+                io.emit('whatsapp-disconnected', { reason });
+            }
+        });
+
+        clientInstance.initialize().catch(err => {
+            console.error('❌ WhatsApp Client başlatılamadı:', err.message);
+            console.log('ℹ️ WhatsApp özelliği devre dışı, uygulama devam ediyor...');
+            clientInstance = null;
+        });
+
+    } catch (error) {
+        console.error('❌ WhatsApp Client oluşturulamadı:', error.message);
+        console.log('ℹ️ WhatsApp özelliği devre dışı, uygulama devam ediyor...');
+        clientInstance = null;
+    }
 
     return clientInstance;
 };
@@ -107,9 +133,9 @@ export const sendMessage = async (target, message) => {
         chatId = target;
     } else {
         const cleanNumber = target.startsWith('0') ? target.substring(1) : target;
-        chatId = `${cleanNumber}@c.us`; 
+        chatId = `${cleanNumber}@c.us`;
     }
-    
+
     try {
         const response = await clientInstance.sendMessage(chatId, message);
         console.log(`Mesaj başarıyla gönderildi. Hedef: ${target}`);

@@ -13,6 +13,7 @@ const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
+    origin: true, // Tüm origin'lere izin ver
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -22,7 +23,7 @@ app.set('io', io);
 
 io.on('connection', (socket) => {
   console.log('✅ Yeni bir client bağlandı:', socket.id);
-  
+
   socket.on('disconnect', () => {
     console.log('❌ Client bağlantısı kesildi:', socket.id);
   });

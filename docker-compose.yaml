@@ -43,6 +43,13 @@ services:
       - .:/usr/src/app
       # 🔥 node_modules'u container'da koru (Windows binarylerini ezmesin)
       - /usr/src/app/node_modules
+      # 🔥 WhatsApp session klasörünü mount ETME (boş volume ile override)
+      - /usr/src/app/.wwebjs_auth
+      - /usr/src/app/.wwebjs_cache
+
+    # Chromium için tmpfs (shared memory)
+    tmpfs:
+      - /tmp
 
     stdin_open: true
     tty: true

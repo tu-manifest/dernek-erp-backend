@@ -9,16 +9,20 @@ import { errorHandler, notFoundHandler } from './src/middlewares/errorHandler.js
 
 const app = express();
 
-// 1️⃣ CORS
+// 1️⃣ CORS - Frontend'den gelen isteklere izin ver
 app.use(cors({
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: true, // Tüm origin'lere izin ver (production'da spesifik URL kullanın)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   credentials: true,
   optionsSuccessStatus: 200,
 }));
 
-// 2️⃣ Helmet
-app.use(helmet());
+// 2️⃣ Helmet - Güvenlik başlıkları (CORS ile uyumlu)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
+}));
 
 // 3️⃣ JSON parser
 app.use(express.json());

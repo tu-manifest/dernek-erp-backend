@@ -28,3 +28,12 @@ docker-compose.yaml
 *.md
 docs
 coverage
+
+# WhatsApp Web.js session data
+.wwebjs_auth
+.wwebjs_cache
+
+# Environment files
+.env
+.env.*
+!.env.example
