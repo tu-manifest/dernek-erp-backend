@@ -113,13 +113,7 @@ class CampaignService {
         const donations = await db.Donation.findAll({
             where: { campaignId },
             order: [['donationDate', 'DESC']],
-            include: [
-                {
-                    model: db.Member,
-                    as: 'member',
-                    attributes: ['id', 'firstName', 'lastName', 'email']
-                }
-            ]
+            attributes: ['id', 'donationAmount', 'donationDate', 'senderName', 'transactionRef', 'source', 'description']
         });
         return donations;
     }
