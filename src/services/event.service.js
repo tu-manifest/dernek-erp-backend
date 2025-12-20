@@ -4,9 +4,59 @@ import { Op } from 'sequelize';
 const Event = db.Event;
 
 /**
+ * Geçmiş etkinliklerin durumunu otomatik güncelle
+ */
+export const updateExpiredEvents = async () => {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS formatı
+
+  // Tarihi geçmiş VEYA bugün ama saati geçmiş etkinlikleri güncelle
+  await Event.update(
+    { status: 'Tamamlandı' },
+    {
+      where: {
+        status: 'Planlandı',
+        [Op.or]: [
+          // Tarihi geçmiş olanlar
+          { date: { [Op.lt]: today } },
+          // Bugün ama saati geçmiş olanlar
+          {
+            date: today,
+            time: { [Op.lt]: currentTime }
+          }
+        ]
+      }
+    }
+  );
+};
+
+/**
  * Yeni etkinlik oluştur
  */
 export const createEvent = async (eventData) => {
+  // Geçmiş tarih kontrolü
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().split(' ')[0];
+
+  const eventDate = eventData.date;
+  const eventTime = eventData.time;
+
+  // Geçmiş tarih kontrolü
+  if (eventDate < today) {
+    const error = new Error('Geçmiş bir tarihe etkinlik oluşturamazsınız. Yalnızca ileri bir tarihte etkinlik planlayabilirsiniz.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Bugün ise saat kontrolü
+  if (eventDate === today && eventTime < currentTime) {
+    const error = new Error('Geçmiş bir saate etkinlik oluşturamazsınız. Yalnızca ileri bir saatte etkinlik planlayabilirsiniz.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const newEvent = await Event.create(eventData);
   return newEvent;
 };
@@ -15,6 +65,9 @@ export const createEvent = async (eventData) => {
  * Tüm etkinlikleri getir
  */
 export const getAllEvents = async () => {
+  // Önce geçmiş etkinliklerin durumunu güncelle
+  await updateExpiredEvents();
+
   const events = await Event.findAll({
     order: [['date', 'ASC'], ['time', 'ASC']],
   });
@@ -142,6 +195,9 @@ export const updateEventStatus = async (id, status) => {
  * Filtrelenmiş etkinlik listesi
  */
 export const getFilteredEvents = async (filters) => {
+  // Önce geçmiş etkinliklerin durumunu güncelle
+  await updateExpiredEvents();
+
   const where = {};
 
   if (filters.status) {
