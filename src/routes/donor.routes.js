@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/', donorController.createDonor);
 router.get('/', donorController.getAllDonors);
 router.get('/:id', donorController.getDonorById);
+router.get('/:id/donations', donorController.getDonorDonations);
 router.put('/:id', donorController.updateDonor);
 router.delete('/:id', donorController.deleteDonor);
 

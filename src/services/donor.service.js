@@ -93,6 +93,43 @@ class DonorService {
       totalDonationAmount: parseFloat(totalDonationResult) || 0
     };
   }
+
+  async getDonorDonations(donorId) {
+    // Önce bağışçının var olduğunu kontrol et
+    const donor = await this.getDonorById(donorId);
+
+    // Bağışçıya ait tüm bağışları getir
+    const donations = await db.Donation.findAll({
+      where: { donorId },
+      include: [{
+        model: db.DonationCampaign,
+        as: 'campaign',
+        attributes: ['id', 'name']
+      }],
+      order: [['donationDate', 'DESC']]
+    });
+
+    return {
+      donor: {
+        id: donor.id,
+        name: donor.name,
+        type: donor.type,
+        email: donor.email,
+        phone: donor.phone
+      },
+      donations: donations.map(d => ({
+        id: d.id,
+        amount: parseFloat(d.donationAmount),
+        date: d.donationDate,
+        source: d.source,
+        description: d.description,
+        transactionRef: d.transactionRef,
+        campaign: d.campaign ? { id: d.campaign.id, name: d.campaign.name } : null
+      })),
+      totalAmount: donations.reduce((sum, d) => sum + parseFloat(d.donationAmount), 0),
+      donationCount: donations.length
+    };
+  }
 }
 
 export default new DonorService();

@@ -49,6 +49,16 @@ class DonorController {
       res.status(statusCode).json({ success: false, message: error.message });
     }
   }
+
+  async getDonorDonations(req, res) {
+    try {
+      const result = await donorService.getDonorDonations(req.params.id);
+      res.status(200).json({ success: true, data: result });
+    } catch (error) {
+      const statusCode = error.statusCode || 500;
+      res.status(statusCode).json({ success: false, message: error.message });
+    }
+  }
 }
 
 export default new DonorController();
