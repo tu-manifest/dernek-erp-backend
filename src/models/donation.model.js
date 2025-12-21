@@ -11,6 +11,10 @@ export default (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    donorId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     donationAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
@@ -46,6 +50,10 @@ export default (sequelize) => {
     Donation.belongsTo(models.DonationCampaign, {
       foreignKey: 'campaignId',
       as: 'campaign'
+    });
+    Donation.belongsTo(models.Donor, {
+      foreignKey: 'donorId',
+      as: 'donor'
     });
   };
 

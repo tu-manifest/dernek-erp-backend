@@ -6,5 +6,8 @@ const router = express.Router();
 
 router.post('/', donorController.createDonor);
 router.get('/', donorController.getAllDonors);
+router.get('/:id', donorController.getDonorById);
+router.put('/:id', donorController.updateDonor);
+router.delete('/:id', donorController.deleteDonor);
 
 export default router;

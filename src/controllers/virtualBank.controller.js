@@ -1,14 +1,10 @@
-// src/controllers/virtualBank.controller.js
+
 import virtualBankService from '../services/virtualBank.service.js';
 
-/**
- * Sanal banka webhook endpoint'i
- * Postman veya Mock Server'dan gelen ödeme bildirimlerini alır
- * POST /api/virtual-bank/webhook
- */
+
 export const receiveDeposit = async (req, res, next) => {
     try {
-        const { campaignId, amount, senderName, transactionRef } = req.body;
+        const { campaignId, amount, senderName, transactionRef, description } = req.body;
 
         // Zorunlu alan kontrolü
         if (!campaignId || !amount) {
@@ -30,12 +26,25 @@ export const receiveDeposit = async (req, res, next) => {
             campaignId,
             amount: parseFloat(amount),
             senderName,
-            transactionRef
+            transactionRef,
+            description
         });
+
+        // Eşleşme mesajı oluştur
+        let matchMessage = '';
+        if (result.donorMatched) {
+            if (result.matchConfidence === 'full') {
+                matchMessage = ` ✅ Dış bağışçı ile tam eşleşme: ${result.matchedDonor.name}`;
+            } else if (result.matchConfidence === 'partial') {
+                matchMessage = ` ⚠️ Dış bağışçı ile kısmi eşleşme: ${result.matchedDonor.name}`;
+            } else {
+                matchMessage = ` ℹ️ Dış bağışçı ID ile eşleşti: ${result.matchedDonor.name} (isim doğrulanamadı)`;
+            }
+        }
 
         res.status(200).json({
             success: true,
-            message: `${amount} TL bağış başarıyla kaydedildi.`,
+            message: `${amount} TL bağış başarıyla kaydedildi.${matchMessage}`,
             data: {
                 donation: result.donation,
                 campaign: {
@@ -43,7 +52,10 @@ export const receiveDeposit = async (req, res, next) => {
                     name: result.campaign.name,
                     collectedAmount: result.campaign.collectedAmount,
                     targetAmount: result.campaign.targetAmount
-                }
+                },
+                donorMatched: result.donorMatched,
+                matchConfidence: result.matchConfidence,
+                matchedDonor: result.matchedDonor
             }
         });
     } catch (error) {
@@ -57,15 +69,10 @@ export const receiveDeposit = async (req, res, next) => {
     }
 };
 
-/**
- * Kampanyaya özel bağış simülasyonu
- * Test için kullanılır - Derste butona basıp bağış simüle etmek için
- * POST /api/virtual-bank/simulate/:campaignId
- */
 export const simulateDonation = async (req, res, next) => {
     try {
         const { campaignId } = req.params;
-        const { amount, senderName } = req.body;
+        const { amount, senderName, description } = req.body;
 
         // Varsayılan miktar 5 TL
         const donationAmount = amount ? parseFloat(amount) : 5;
@@ -79,12 +86,25 @@ export const simulateDonation = async (req, res, next) => {
 
         const result = await virtualBankService.simulateDonation(campaignId, {
             amount: donationAmount,
-            senderName: senderName || 'Demo Bağışçı'
+            senderName: senderName || 'Demo Bağışçı',
+            description
         });
+
+        // Eşleşme mesajı oluştur
+        let matchMessage = '';
+        if (result.donorMatched) {
+            if (result.matchConfidence === 'full') {
+                matchMessage = ` ✅ Dış bağışçı ile tam eşleşme: ${result.matchedDonor.name}`;
+            } else if (result.matchConfidence === 'partial') {
+                matchMessage = ` ⚠️ Dış bağışçı ile kısmi eşleşme: ${result.matchedDonor.name}`;
+            } else {
+                matchMessage = ` ℹ️ Dış bağışçı ID ile eşleşti: ${result.matchedDonor.name} (isim doğrulanamadı)`;
+            }
+        }
 
         res.status(200).json({
             success: true,
-            message: `🎉 ${donationAmount} TL bağış simülasyonu başarılı!`,
+            message: `🎉 ${donationAmount} TL bağış simülasyonu başarılı!${matchMessage}`,
             data: {
                 donation: result.donation,
                 campaign: {
@@ -93,7 +113,10 @@ export const simulateDonation = async (req, res, next) => {
                     collectedAmount: result.campaign.collectedAmount,
                     targetAmount: result.campaign.targetAmount,
                     progress: `${((parseFloat(result.campaign.collectedAmount) / parseFloat(result.campaign.targetAmount)) * 100).toFixed(1)}%`
-                }
+                },
+                donorMatched: result.donorMatched,
+                matchConfidence: result.matchConfidence,
+                matchedDonor: result.matchedDonor
             }
         });
     } catch (error) {

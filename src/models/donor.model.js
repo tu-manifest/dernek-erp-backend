@@ -11,11 +11,25 @@ export default (sequelize) => {
       type: DataTypes.ENUM('Kişi', 'Kurum'),
       allowNull: false,
     },
-    contact: {
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isEmail: true
+      }
+    },
+    phone: {
       type: DataTypes.STRING,
       allowNull: true,
     },
   });
+
+  Donor.associate = (models) => {
+    Donor.hasMany(models.Donation, {
+      foreignKey: 'donorId',
+      as: 'donations'
+    });
+  };
 
   return Donor;
 };
