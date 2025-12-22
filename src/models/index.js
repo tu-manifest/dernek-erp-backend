@@ -11,6 +11,7 @@ import externalDebtorModel from './externalDebtor.model.js';
 import adminModel from './admin.model.js';
 import fixedAssetModel from './fixedAsset.model.js';
 import documentModel from './document.model.js';
+import activityLogModel from './activityLog.model.js';
 
 const db = {};
 
@@ -27,6 +28,7 @@ const models = {
   Admin: adminModel,
   FixedAsset: fixedAssetModel,
   Document: documentModel,
+  ActivityLog: activityLogModel,
 };
 
 Object.keys(models).forEach(modelName => {

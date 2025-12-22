@@ -1,4 +1,5 @@
 import * as EventService from '../services/event.service.js';
+import * as ActivityLogService from '../services/activityLog.service.js';
 
 /**
  * Yeni etkinlik oluştur
@@ -7,6 +8,17 @@ import * as EventService from '../services/event.service.js';
 export const createEvent = async (req, res, next) => {
     try {
         const newEvent = await EventService.createEvent(req.body);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'CREATE',
+            entityType: 'Event',
+            entityId: newEvent.id,
+            entityName: newEvent.eventName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
 
         res.status(201).json({
             success: true,
@@ -93,6 +105,17 @@ export const updateEvent = async (req, res, next) => {
     try {
         const updatedEvent = await EventService.updateEvent(req.params.id, req.body);
 
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'UPDATE',
+            entityType: 'Event',
+            entityId: updatedEvent.id,
+            entityName: updatedEvent.eventName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
+
         res.status(200).json({
             success: true,
             message: 'Etkinlik başarıyla güncellendi.',
@@ -123,7 +146,22 @@ export const updateEvent = async (req, res, next) => {
  */
 export const deleteEvent = async (req, res, next) => {
     try {
+        // Silmeden önce etkinlik bilgisini al
+        const event = await EventService.getEventById(req.params.id);
+        const eventName = event.eventName;
+
         await EventService.deleteEvent(req.params.id);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'DELETE',
+            entityType: 'Event',
+            entityId: parseInt(req.params.id),
+            entityName: eventName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
 
         res.status(200).json({
             success: true,

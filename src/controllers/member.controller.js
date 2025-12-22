@@ -1,10 +1,22 @@
 import * as Memberservice from '../services/member.service.js';
+import * as ActivityLogService from '../services/activityLog.service.js';
 
 // CREATE - Yeni üye ekle (mevcut)
 export const addNewMember = async (req, res, next) => {
     try {
         const newMember = await Memberservice.addNewMember(req.body);
-        
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'CREATE',
+            entityType: 'Member',
+            entityId: newMember.id,
+            entityName: newMember.fullName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
+
         res.status(201).json({
             success: true,
             message: 'Üyelik başvurusu başarıyla oluşturuldu.',
@@ -62,6 +74,18 @@ export const getMemberById = async (req, res, next) => {
 export const updateMember = async (req, res, next) => {
     try {
         const updatedMember = await Memberservice.updateMember(req.params.id, req.body);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'UPDATE',
+            entityType: 'Member',
+            entityId: updatedMember.id,
+            entityName: updatedMember.fullName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
+
         res.status(200).json({
             success: true,
             message: 'Üye başarıyla güncellendi.',
@@ -90,11 +114,23 @@ export const updateMember = async (req, res, next) => {
 export const deleteMember = async (req, res, next) => {
     try {
         const result = await Memberservice.deleteMember(req.params.id);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'DELETE',
+            entityType: 'Member',
+            entityId: result.id,
+            entityName: result.fullName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
+
         res.status(200).json({
             success: true,
             message: result.message,
-            deletedMember: { 
-                id: result.id, 
+            deletedMember: {
+                id: result.id,
                 fullName: result.fullName,
                 email: result.email
             }
@@ -120,7 +156,7 @@ export const searchMembers = async (req, res, next) => {
                 message: 'Arama terimi (q) parametresi gereklidir.'
             });
         }
-        
+
         const members = await Memberservice.searchMembers(q);
         res.status(200).json({
             success: true,

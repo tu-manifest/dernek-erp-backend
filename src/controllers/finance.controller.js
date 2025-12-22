@@ -2,6 +2,7 @@ import * as financeService from '../services/finance.service.js';
 import { asyncHandler } from '../middlewares/errorHandler.js';
 import { AppError } from '../middlewares/errorHandler.js';
 import { ERROR_MESSAGES, HTTP_STATUS } from '../constants/errorMessages.js';
+import * as ActivityLogService from '../services/activityLog.service.js';
 
 // Borç Girişi
 export const addDebt = asyncHandler(async (req, res) => {
@@ -15,6 +16,18 @@ export const addDebt = asyncHandler(async (req, res) => {
   }
 
   const debt = await financeService.addDebt(req.body);
+
+  // Aktivite logu oluştur
+  await ActivityLogService.createLog({
+    action: 'CREATE',
+    entityType: 'Debt',
+    entityId: debt.id,
+    entityName: `${debtType} - ${amount} ${currency}`,
+    adminId: req.user?.id,
+    adminName: req.user?.fullName || 'Sistem',
+    ipAddress: req.ip
+  });
+
   return res.status(HTTP_STATUS.CREATED).json({ success: true, data: debt });
 });
 
@@ -101,13 +114,41 @@ export const getDebtorList = asyncHandler(async (req, res) => {
 export const updateDebt = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const updatedDebt = await financeService.updateDebt(id, req.body);
+
+  // Aktivite logu oluştur
+  await ActivityLogService.createLog({
+    action: 'UPDATE',
+    entityType: 'Debt',
+    entityId: parseInt(id),
+    entityName: `${updatedDebt.debtType} - ${updatedDebt.amount} ${updatedDebt.currency}`,
+    adminId: req.user?.id,
+    adminName: req.user?.fullName || 'Sistem',
+    ipAddress: req.ip
+  });
+
   return res.status(HTTP_STATUS.OK).json({ success: true, message: 'Borç güncellendi.', data: updatedDebt });
 });
 
 // Borç Silme
 export const deleteDebt = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  // Silmeden önce borç bilgisini al
+  const debtInfo = await financeService.getDebtDetails(id);
+
   const result = await financeService.deleteDebt(id);
+
+  // Aktivite logu oluştur
+  await ActivityLogService.createLog({
+    action: 'DELETE',
+    entityType: 'Debt',
+    entityId: parseInt(id),
+    entityName: `Borç #${id}`,
+    adminId: req.user?.id,
+    adminName: req.user?.fullName || 'Sistem',
+    ipAddress: req.ip
+  });
+
   return res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 });
 

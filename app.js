@@ -6,6 +6,7 @@ import routes from './src/routes/index.js';
 import models from './src/models/index.js';
 import { initializeClient, setSocketIO } from './src/utils/whatsappClient.js';
 import { errorHandler, notFoundHandler } from './src/middlewares/errorHandler.js';
+import { seedAdmins } from './src/seeders/adminSeeder.js';
 
 const app = express();
 
@@ -41,14 +42,25 @@ export const setupWhatsApp = (io) => {
   initializeClient();
 };
 
-// 8️⃣ Sequelize bağlantı testi
+// 8️⃣ Sequelize bağlantı testi ve veritabanı senkronizasyonu
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Sequelize veritabanı bağlantısı başarılı!');
     return models.sequelize.sync({ alter: true })
   })
+  .then(() => {
+    console.log('✅ Veritabanı senkronizasyonu tamamlandı');
+  })
   .catch(err => {
-    console.error('❌ Veritabanı bağlantısı başarısız:', err);
+    console.error('⚠️ Veritabanı senkronizasyonu sırasında hata (devam ediliyor):', err.message);
+  })
+  .finally(async () => {
+    // 9️⃣ Varsayılan admin kullanıcılarını oluştur (sync başarılı veya başarısız olsa da çalışır)
+    try {
+      await seedAdmins();
+    } catch (seedErr) {
+      console.error('❌ Admin seed hatası:', seedErr.message);
+    }
   });
 
 export default app;

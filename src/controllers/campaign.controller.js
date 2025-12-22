@@ -1,5 +1,6 @@
 // src/controllers/campaign.controller.js
 import campaignService from '../services/campaign.service.js';
+import * as ActivityLogService from '../services/activityLog.service.js';
 
 /**
  * Yeni kampanya oluştur
@@ -8,6 +9,17 @@ import campaignService from '../services/campaign.service.js';
 export const createCampaign = async (req, res, next) => {
     try {
         const campaign = await campaignService.createCampaign(req.body);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'CREATE',
+            entityType: 'Campaign',
+            entityId: campaign.id,
+            entityName: campaign.name,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
 
         res.status(201).json({
             success: true,
@@ -78,6 +90,17 @@ export const updateCampaign = async (req, res, next) => {
     try {
         const campaign = await campaignService.updateCampaign(req.params.id, req.body);
 
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'UPDATE',
+            entityType: 'Campaign',
+            entityId: campaign.id,
+            entityName: campaign.name,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
+
         res.status(200).json({
             success: true,
             message: 'Kampanya başarıyla güncellendi.',
@@ -108,7 +131,22 @@ export const updateCampaign = async (req, res, next) => {
  */
 export const deleteCampaign = async (req, res, next) => {
     try {
+        // Silmeden önce kampanya bilgisini al
+        const campaign = await campaignService.getCampaignById(req.params.id);
+        const campaignName = campaign.name;
+
         await campaignService.deleteCampaign(req.params.id);
+
+        // Aktivite logu oluştur
+        await ActivityLogService.createLog({
+            action: 'DELETE',
+            entityType: 'Campaign',
+            entityId: parseInt(req.params.id),
+            entityName: campaignName,
+            adminId: req.user?.id,
+            adminName: req.user?.fullName || 'Sistem',
+            ipAddress: req.ip
+        });
 
         res.status(200).json({
             success: true,
