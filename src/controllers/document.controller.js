@@ -36,9 +36,24 @@ class DocumentController {
         try {
             const result = await documentService.downloadDocument(req.params.id);
 
-            // Content-Disposition header ile dosya adını belirt
+            // Content-Disposition header ile dosya adını belirt (indirme zorla)
             res.set('Content-Type', result.mimeType);
             res.set('Content-Disposition', `attachment; filename="${encodeURIComponent(result.fileName)}"`);
+            res.set('Cache-Control', 'public, max-age=86400');
+            res.send(result.file);
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).json({ success: false, message: error.message });
+        }
+    }
+
+    async viewDocument(req, res) {
+        try {
+            const result = await documentService.viewDocument(req.params.id);
+
+            // inline görüntüleme - tarayıcıda açılır
+            res.set('Content-Type', result.mimeType);
+            res.set('Content-Disposition', `inline; filename="${encodeURIComponent(result.fileName)}"`);
             res.set('Cache-Control', 'public, max-age=86400');
             res.send(result.file);
         } catch (error) {

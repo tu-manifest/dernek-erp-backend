@@ -87,6 +87,27 @@ class DocumentService {
     }
 
     /**
+     * Dosyayı görüntüle (tarayıcıda inline gösterim için)
+     */
+    async viewDocument(id) {
+        const document = await db.Document.findByPk(id, {
+            attributes: ['id', 'file', 'fileName', 'fileMimeType']
+        });
+
+        if (!document) {
+            const error = new Error('Döküman bulunamadı.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return {
+            file: document.file,
+            fileName: document.fileName,
+            mimeType: document.fileMimeType
+        };
+    }
+
+    /**
      * Döküman bilgilerini güncelle (dosya hariç - sadece meta data)
      */
     async updateDocument(id, data) {

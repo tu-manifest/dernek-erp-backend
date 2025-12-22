@@ -10,6 +10,7 @@ router.post('/', uploadSingleDocument, handleMulterError, documentController.cre
 router.get('/', documentController.getAllDocuments);
 router.get('/:id', documentController.getDocumentById);
 router.get('/:id/download', documentController.downloadDocument);
+router.get('/:id/view', documentController.viewDocument);
 router.put('/:id', documentController.updateDocument);
 router.delete('/:id', documentController.deleteDocument);
 
