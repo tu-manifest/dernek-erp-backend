@@ -3,10 +3,10 @@ import { DataTypes } from 'sequelize';
 export default (sequelize) => {
   const Debt = sequelize.define('Debt', {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      autoIncrement: true
     },
     // Borçlu İlişkisi (Polimorfik) - memberId veya externalDebtorId dolu olacak
     memberId: {
@@ -18,29 +18,29 @@ export default (sequelize) => {
       }
     },
     externalDebtorId: {
-        type: DataTypes.UUID,
-        allowNull: true, // Dış borçlu ID'si
-        references: {
-            model: 'ExternalDebtors',
-            key: 'id',
-        }
+      type: DataTypes.INTEGER,
+      allowNull: true, // Dış borçlu ID'si
+      references: {
+        model: 'ExternalDebtors',
+        key: 'id',
+      }
     },
     debtorType: {
-        type: DataTypes.ENUM('MEMBER', 'EXTERNAL'), // Borçlunun tipi
-        allowNull: false
+      type: DataTypes.ENUM('MEMBER', 'EXTERNAL'), // Borçlunun tipi
+      allowNull: false
     },
-    
+
     // Borç Girişi Ekranı Gereksinimleri
     debtType: {
-        type: DataTypes.ENUM(
-            'Etkinlik katılım ücreti', 'Materyal alım ücreti', 
-            'Kiralama/tesis kullanım ücreti', 'Bağış Sözü', 
-            'Kampanya Taahüdü', 'Vakıf/Hibe sözü', 
-            'Tazminat Hasar bedeli', 'Sözleşme ihlali Bedeli', 
-            'Devlet iadesi', 'Sigorta Hasar Bedeli', 
-            'Fon Toplama etkinliği geliri', 'Ayni Bağış Değeri'
-        ),
-        allowNull: false
+      type: DataTypes.ENUM(
+        'Etkinlik katılım ücreti', 'Materyal alım ücreti',
+        'Kiralama/tesis kullanım ücreti', 'Bağış Sözü',
+        'Kampanya Taahüdü', 'Vakıf/Hibe sözü',
+        'Tazminat Hasar bedeli', 'Sözleşme ihlali Bedeli',
+        'Devlet iadesi', 'Sigorta Hasar Bedeli',
+        'Fon Toplama etkinliği geliri', 'Ayni Bağış Değeri'
+      ),
+      allowNull: false
     },
     amount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -48,15 +48,15 @@ export default (sequelize) => {
       comment: 'Toplam borç miktarı (Vadesi gelen/gelecek)'
     },
     currency: {
-        type: DataTypes.ENUM('TL', 'EUR', 'USD', 'GBP'),
-        allowNull: false,
-        defaultValue: 'TL'
+      type: DataTypes.ENUM('TL', 'EUR', 'USD', 'GBP'),
+      allowNull: false,
+      defaultValue: 'TL'
     },
     dueDate: {
       type: DataTypes.DATEONLY,
       allowNull: true
     },
-    
+
     // Tahsilat Ekranı Görüntüleme Alanı
     collectedAmount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -70,8 +70,8 @@ export default (sequelize) => {
       defaultValue: 'Pending'
     },
     description: {
-        type: DataTypes.STRING,
-        allowNull: true
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     tableName: 'Debts',
@@ -82,6 +82,14 @@ export default (sequelize) => {
     Debt.belongsTo(models.Member, {
       foreignKey: 'memberId',
       as: 'member',
+    });
+    Debt.belongsTo(models.ExternalDebtor, {
+      foreignKey: 'externalDebtorId',
+      as: 'externalDebtor',
+    });
+    Debt.hasMany(models.Collection, {
+      foreignKey: 'debtId',
+      as: 'collections',
     });
   };
 

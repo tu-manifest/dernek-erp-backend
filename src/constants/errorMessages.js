@@ -62,6 +62,9 @@ export const ERROR_MESSAGES = {
     COLLECTION_REQUIRED_FIELDS: 'Tahsilat için gerekli alanlar eksik: debtId, amountPaid, paymentMethod, collectionDate.',
     RECEIPT_REQUIRED: 'Banka veya Kredi Kartı ödemeleri için dekont numarası zorunludur.',
     SEARCH_MIN_LENGTH: 'Arama terimi en az 3 karakter olmalıdır.',
+    NO_OUTSTANDING_DEBTS: 'Bu borçlunun ödeme yapılacak açık borcu bulunmamaktadır.',
+    AMOUNT_EXCEEDS_TOTAL_DEBT: 'Ödeme tutarı ({amount}₺) toplam kalan borcu ({total}₺) aşıyor.',
+    DEBT_HAS_PAYMENTS: 'Ödeme yapılmış borçlar silinemez veya tutarı değiştirilemez.',
   },
 
   // Etkinlik Hataları

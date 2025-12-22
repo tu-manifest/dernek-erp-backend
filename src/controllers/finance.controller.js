@@ -52,9 +52,63 @@ export const searchDebtors = asyncHandler(async (req, res) => {
   if (!searchTerm || searchTerm.length < 3) {
     throw new AppError(ERROR_MESSAGES.FINANCE.SEARCH_MIN_LENGTH, HTTP_STATUS.BAD_REQUEST);
   }
-  
+
   const debtors = await financeService.searchDebtors(searchTerm);
   return res.status(HTTP_STATUS.OK).json({ success: true, data: debtors });
+});
+
+// Toplu Ödeme (FIFO Dağıtım)
+export const bulkPayment = asyncHandler(async (req, res) => {
+  const { debtorId, debtorType, totalAmount, paymentMethod, receiptNumber, collectionDate, notes } = req.body;
+
+  if (!debtorId || !debtorType || !totalAmount || !paymentMethod || !collectionDate) {
+    throw new AppError('Eksik alanlar: debtorId, debtorType, totalAmount, paymentMethod, collectionDate gerekli.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (!['MEMBER', 'EXTERNAL'].includes(debtorType)) {
+    throw new AppError('debtorType MEMBER veya EXTERNAL olmalıdır.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if ((paymentMethod === 'Banka' || paymentMethod === 'Kredi Kartı') && !receiptNumber) {
+    throw new AppError(ERROR_MESSAGES.FINANCE.RECEIPT_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const result = await financeService.recordBulkPayment(
+    debtorId, debtorType, totalAmount, paymentMethod, receiptNumber, collectionDate, notes
+  );
+  return res.status(HTTP_STATUS.OK).json({ success: true, message: 'Ödeme başarıyla dağıtıldı.', data: result });
+});
+
+// Borçlu Özeti
+export const getDebtorSummary = asyncHandler(async (req, res) => {
+  const { type, id } = req.params;
+
+  if (!['MEMBER', 'EXTERNAL'].includes(type)) {
+    throw new AppError('type MEMBER veya EXTERNAL olmalıdır.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const result = await financeService.getDebtorSummary(id, type);
+  return res.status(HTTP_STATUS.OK).json({ success: true, data: result });
+});
+
+// Borçlu Listesi (İsme göre gruplandırılmış)
+export const getDebtorList = asyncHandler(async (req, res) => {
+  const debtors = await financeService.getDebtorList();
+  return res.status(HTTP_STATUS.OK).json({ success: true, data: debtors });
+});
+
+// Borç Güncelleme
+export const updateDebt = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updatedDebt = await financeService.updateDebt(id, req.body);
+  return res.status(HTTP_STATUS.OK).json({ success: true, message: 'Borç güncellendi.', data: updatedDebt });
+});
+
+// Borç Silme
+export const deleteDebt = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const result = await financeService.deleteDebt(id);
+  return res.status(HTTP_STATUS.OK).json({ success: true, ...result });
 });
 
 export default {
@@ -62,5 +116,10 @@ export default {
   recordCollection,
   getDebtList,
   getDebtDetails,
-  searchDebtors
+  searchDebtors,
+  bulkPayment,
+  getDebtorSummary,
+  getDebtorList,
+  updateDebt,
+  deleteDebt
 };

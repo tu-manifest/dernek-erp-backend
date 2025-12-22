@@ -3,10 +3,10 @@ import { DataTypes } from 'sequelize';
 export default (sequelize) => {
   const ExternalDebtor = sequelize.define('ExternalDebtor', {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      autoIncrement: true
     },
     name: {
       type: DataTypes.STRING,

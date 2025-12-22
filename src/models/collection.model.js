@@ -3,13 +3,13 @@ import { DataTypes } from 'sequelize';
 export default (sequelize) => {
   const Collection = sequelize.define('Collection', {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
+      autoIncrement: true
     },
     debtId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: 'Debts',
@@ -48,6 +48,13 @@ export default (sequelize) => {
     tableName: 'Collections',
     timestamps: true,
   });
-  
+
+  Collection.associate = (models) => {
+    Collection.belongsTo(models.Debt, {
+      foreignKey: 'debtId',
+      as: 'debt',
+    });
+  };
+
   return Collection;
 };
