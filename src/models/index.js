@@ -12,6 +12,7 @@ import adminModel from './admin.model.js';
 import fixedAssetModel from './fixedAsset.model.js';
 import documentModel from './document.model.js';
 import activityLogModel from './activityLog.model.js';
+import budgetPlanModel from './budgetPlan.model.js';
 
 const db = {};
 
@@ -29,6 +30,7 @@ const models = {
   FixedAsset: fixedAssetModel,
   Document: documentModel,
   ActivityLog: activityLogModel,
+  BudgetPlanItem: budgetPlanModel,
 };
 
 Object.keys(models).forEach(modelName => {
