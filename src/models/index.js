@@ -10,6 +10,7 @@ import collectionModel from './collection.model.js';
 import externalDebtorModel from './externalDebtor.model.js';
 import adminModel from './admin.model.js';
 import fixedAssetModel from './fixedAsset.model.js';
+import documentModel from './document.model.js';
 
 const db = {};
 
@@ -25,6 +26,7 @@ const models = {
   ExternalDebtor: externalDebtorModel,
   Admin: adminModel,
   FixedAsset: fixedAssetModel,
+  Document: documentModel,
 };
 
 Object.keys(models).forEach(modelName => {

@@ -55,7 +55,6 @@ export default (sequelize) => {
         registrationNo: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true,
             comment: 'Varlık sicil no'
         },
         name: {
@@ -158,7 +157,13 @@ export default (sequelize) => {
         }
     }, {
         tableName: 'FixedAssets',
-        timestamps: true
+        timestamps: true,
+        indexes: [
+            {
+                unique: true,
+                fields: ['registrationNo']
+            }
+        ]
     });
 
     return FixedAsset;
