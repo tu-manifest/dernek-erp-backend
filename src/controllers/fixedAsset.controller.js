@@ -73,6 +73,38 @@ class FixedAssetController {
             res.status(500).json({ success: false, message: error.message });
         }
     }
+
+    async uploadImage(req, res) {
+        try {
+            const result = await fixedAssetService.uploadImage(req.params.id, req.file);
+            res.status(200).json({ success: true, ...result });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).json({ success: false, message: error.message });
+        }
+    }
+
+    async getImage(req, res) {
+        try {
+            const result = await fixedAssetService.getImage(req.params.id);
+            res.set('Content-Type', result.mimeType);
+            res.set('Cache-Control', 'public, max-age=86400'); // 1 gün cache
+            res.send(result.image);
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).json({ success: false, message: error.message });
+        }
+    }
+
+    async deleteImage(req, res) {
+        try {
+            const result = await fixedAssetService.deleteImage(req.params.id);
+            res.status(200).json({ success: true, ...result });
+        } catch (error) {
+            const statusCode = error.statusCode || 500;
+            res.status(statusCode).json({ success: false, message: error.message });
+        }
+    }
 }
 
 export default new FixedAssetController();

@@ -1,6 +1,7 @@
 // src/routes/fixedAsset.routes.js
 import express from 'express';
 import fixedAssetController from '../controllers/fixedAsset.controller.js';
+import { uploadSingleImage, handleMulterError } from '../middlewares/upload.middleware.js';
 
 const router = express.Router();
 
@@ -16,5 +17,10 @@ router.delete('/:id', fixedAssetController.deleteAsset);
 
 // Durum güncelleme
 router.patch('/:id/status', fixedAssetController.updateStatus);
+
+// Resim işlemleri
+router.post('/:id/image', uploadSingleImage, handleMulterError, fixedAssetController.uploadImage);
+router.get('/:id/image', fixedAssetController.getImage);
+router.delete('/:id/image', fixedAssetController.deleteImage);
 
 export default router;

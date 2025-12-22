@@ -125,7 +125,9 @@ class FixedAssetService {
     }
 
     async getAllAssets() {
+        // Image blob hariç getir (performans için)
         const assets = await db.FixedAsset.findAll({
+            attributes: { exclude: ['image'] },
             order: [['createdAt', 'DESC']]
         });
 
@@ -148,14 +150,17 @@ class FixedAssetService {
             totalAccumulatedDepreciation += depreciationInfo.accumulatedDepreciation;
             totalNetBookValue += depreciationInfo.netBookValue;
 
+            // image alanını response'dan çıkar, hasImage flag ekle
+            const { image, ...assetWithoutImage } = plainAsset;
             return {
-                ...plainAsset,
+                ...assetWithoutImage,
                 costValue: parseFloat(plainAsset.costValue),
                 salvageValue: parseFloat(plainAsset.salvageValue) || 0,
                 depreciationRate: parseFloat(plainAsset.depreciationRate),
                 accumulatedDepreciation: depreciationInfo.accumulatedDepreciation,
                 netBookValue: depreciationInfo.netBookValue,
-                yearsElapsed: depreciationInfo.yearsElapsed
+                yearsElapsed: depreciationInfo.yearsElapsed,
+                hasImage: !!plainAsset.imageMimeType
             };
         });
 
@@ -177,6 +182,89 @@ class FixedAssetService {
             subClasses: ASSET_SUB_CLASSES,
             statuses: Object.values(ASSET_STATUS)
         };
+    }
+
+    /**
+     * Resim yükle
+     */
+    async uploadImage(id, file) {
+        const asset = await this.getAssetById(id);
+
+        if (!file) {
+            const error = new Error('Resim dosyası bulunamadı.');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        await asset.update({
+            image: file.buffer,
+            imageMimeType: file.mimetype
+        });
+
+        return { message: 'Resim başarıyla yüklendi.' };
+    }
+
+    /**
+     * Resim getir
+     */
+    async getImage(id) {
+        const asset = await db.FixedAsset.findByPk(id, {
+            attributes: ['id', 'image', 'imageMimeType']
+        });
+
+        if (!asset) {
+            const error = new Error('Varlık bulunamadı.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        if (!asset.image) {
+            const error = new Error('Bu varlığa ait resim bulunamadı.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return {
+            image: asset.image,
+            mimeType: asset.imageMimeType
+        };
+    }
+
+    /**
+     * Resim sil
+     */
+    async deleteImage(id) {
+        const asset = await this.getAssetById(id);
+
+        if (!asset.image) {
+            const error = new Error('Silinecek resim bulunamadı.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        await asset.update({
+            image: null,
+            imageMimeType: null
+        });
+
+        return { message: 'Resim başarıyla silindi.' };
+    }
+
+    /**
+     * Varlığın resmi olup olmadığını kontrol et
+     */
+    async hasImage(id) {
+        const asset = await db.FixedAsset.findByPk(id, {
+            attributes: ['id', 'imageMimeType']
+        });
+
+        if (!asset) {
+            const error = new Error('Varlık bulunamadı.');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        return { hasImage: !!asset.imageMimeType };
     }
 }
 

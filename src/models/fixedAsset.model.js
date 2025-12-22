@@ -145,6 +145,16 @@ export default (sequelize) => {
             allowNull: false,
             defaultValue: ASSET_STATUS.KULANIMDA,
             comment: 'Durum'
+        },
+        image: {
+            type: DataTypes.BLOB('long'),
+            allowNull: true,
+            comment: 'Varlık resmi (bytea)'
+        },
+        imageMimeType: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+            comment: 'Resim dosya tipi (image/jpeg, image/png vb.)'
         }
     }, {
         tableName: 'FixedAssets',
