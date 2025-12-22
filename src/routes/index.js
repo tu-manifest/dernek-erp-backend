@@ -11,6 +11,7 @@ import campaignRoutes from './campaign.routes.js';
 import virtualBankRoutes from './virtualBank.routes.js';
 import fixedAssetRoutes from './fixedAsset.routes.js';
 import documentRoutes from './document.routes.js';
+import settingRoutes from './setting.routes.js';
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ router.use("/campaigns", campaignRoutes);
 router.use("/virtual-bank", virtualBankRoutes);
 router.use("/fixed-assets", fixedAssetRoutes);
 router.use("/documents", documentRoutes);
+router.use('/settings', settingRoutes);
 
 export default router;
 
