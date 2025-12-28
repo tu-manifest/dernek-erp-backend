@@ -14,6 +14,7 @@ import documentModel from './document.model.js';
 import activityLogModel from './activityLog.model.js';
 import budgetPlanModel from './budgetPlan.model.js';
 import expenseModel from './expense.model.js';
+import meetingModel from './meeting.model.js';
 
 const db = {};
 
@@ -33,6 +34,7 @@ const models = {
   ActivityLog: activityLogModel,
   BudgetPlanItem: budgetPlanModel,
   Expense: expenseModel,
+  Meeting: meetingModel,
 };
 
 Object.keys(models).forEach(modelName => {

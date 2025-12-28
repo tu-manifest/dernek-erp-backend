@@ -17,6 +17,7 @@ import dashboardRoutes from './dashboard.routes.js';
 import budgetPlanRoutes from './budgetPlan.routes.js';
 import expenseRoutes from './expense.routes.js';
 import financialReportRoutes from './financialReport.routes.js';
+import meetingRoutes from './meeting.routes.js';
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/budget', budgetPlanRoutes);
 router.use('/expenses', expenseRoutes);
 router.use('/financial-report', financialReportRoutes);
+router.use('/meetings', meetingRoutes);
 
 export default router;
 
