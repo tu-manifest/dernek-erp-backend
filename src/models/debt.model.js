@@ -33,7 +33,7 @@ export default (sequelize) => {
     // Borç Girişi Ekranı Gereksinimleri
     debtType: {
       type: DataTypes.ENUM(
-        'Etkinlik katılım ücreti', 'Materyal alım ücreti',
+        'Aidat', 'Etkinlik katılım ücreti', 'Materyal alım ücreti',
         'Kiralama/tesis kullanım ücreti', 'Bağış Sözü',
         'Kampanya Taahüdü', 'Vakıf/Hibe sözü',
         'Tazminat Hasar bedeli', 'Sözleşme ihlali Bedeli',

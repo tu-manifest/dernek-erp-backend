@@ -1,81 +1,98 @@
 import db from '../models/index.js';
-const { Member, Group } = db;
+const { Member, Group, Debt } = db;
 
 // CREATE - Group ID ile üye ekleme
 export const addNewMember = async (memberData) => {
-  console.log("addNewMember service çalıştı");
-  
-  const {
-    fullName,
-    tcNumber,
-    birthDate,
-    phoneNumber,
-    email,
-    address,
-    group_id, // YENİ: Grup ID'si
-    duesAmount,
-    duesFrequency,
-    paymentStatus,
-    charterApproval, 
-    kvkkApproval     
-  } = memberData;
+    console.log("addNewMember service çalıştı");
 
-  const isCharterApproved = charterApproval === 'true' || charterApproval === true;
-  const isKvkkApproved = kvkkApproval === 'true' || kvkkApproval === true;
-  
-  try {
-    // Önce grup var mı kontrol et
-    const group = await Group.findByPk(group_id);
-    if (!group) {
-      const error = new Error('Seçilen grup bulunamadı');
-      error.statusCode = 400;
-      throw error;
+    const {
+        fullName,
+        tcNumber,
+        birthDate,
+        phoneNumber,
+        email,
+        address,
+        group_id, // YENİ: Grup ID'si
+        duesAmount,
+        duesFrequency,
+        paymentStatus,
+        charterApproval,
+        kvkkApproval
+    } = memberData;
+
+    const isCharterApproved = charterApproval === 'true' || charterApproval === true;
+    const isKvkkApproved = kvkkApproval === 'true' || kvkkApproval === true;
+
+    try {
+        // Önce grup var mı kontrol et
+        const group = await Group.findByPk(group_id);
+        if (!group) {
+            const error = new Error('Seçilen grup bulunamadı');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        // Grup aktif mi kontrol et
+        if (!group.isActive) {
+            const error = new Error('Seçilen grup aktif değil');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const newMember = await Member.create({
+            fullName,
+            tcNumber,
+            birthDate,
+            phoneNumber,
+            email,
+            address,
+            group_id: parseInt(group_id), // Grup ID'sini ekle
+            duesAmount: parseFloat(duesAmount),
+            duesFrequency,
+            paymentStatus,
+            charterApproval: isCharterApproved,
+            kvkkApproval: isKvkkApproved,
+        });
+
+        console.log("Yeni üye oluşturuldu:", newMember);
+
+        // Aidat durumu bekliyor ise otomatik borç oluştur
+        if (paymentStatus === 'pending' && parseFloat(duesAmount) > 0) {
+            await Debt.create({
+                memberId: newMember.id,
+                debtorType: 'MEMBER',
+                debtType: 'Aidat',
+                amount: parseFloat(duesAmount),
+                currency: 'TL',
+                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 gün sonra
+                collectedAmount: 0,
+                status: 'Pending',
+                description: 'Üyelik aidatı - Otomatik oluşturuldu'
+            });
+            console.log("Otomatik aidat borcu oluşturuldu, Üye ID:", newMember.id);
+        }
+
+        return {
+            id: newMember.id,
+            fullName: newMember.fullName,
+            email: newMember.email,
+            tcNumber: newMember.tcNumber,
+            group_id: newMember.group_id,
+            group_name: group.group_name, // Grup adını da döndür
+            createdAt: newMember.createdAt,
+            updatedAt: newMember.updatedAt
+        };
+
+    } catch (error) {
+        console.error("Üye kaydı sırasında hata:", error);
+        throw error;
     }
-
-    // Grup aktif mi kontrol et
-    if (!group.isActive) {
-      const error = new Error('Seçilen grup aktif değil');
-      error.statusCode = 400;
-      throw error;
-    }
-
-    const newMember = await Member.create({
-      fullName,
-      tcNumber,
-      birthDate,
-      phoneNumber,
-      email,
-      address,
-      group_id: parseInt(group_id), // Grup ID'sini ekle
-      duesAmount: parseFloat(duesAmount),
-      duesFrequency,
-      paymentStatus,
-      charterApproval: isCharterApproved,
-      kvkkApproval: isKvkkApproved,
-    });
-
-    console.log("Yeni üye oluşturuldu:", newMember);
-    return {
-      id: newMember.id,
-      fullName: newMember.fullName,
-      email: newMember.email,
-      tcNumber: newMember.tcNumber,
-      group_id: newMember.group_id,
-      group_name: group.group_name, // Grup adını da döndür
-      createdAt: newMember.createdAt,
-      updatedAt: newMember.updatedAt
-    };
-
-  } catch (error) {
-    console.error("Üye kaydı sırasında hata:", error);
-    throw error;
-  }
 };
 
 // READ - Tüm üyeleri grup bilgileriyle getir
 export const getAllMembers = async () => {
     console.log("getAllMembers service çalıştı");
-    
+
     try {
         const members = await Member.findAll({
             include: [{
@@ -85,7 +102,7 @@ export const getAllMembers = async () => {
             }],
             order: [['createdAt', 'DESC']]
         });
-        
+
         return members.map(member => ({
             id: member.id,
             fullName: member.fullName,
@@ -118,7 +135,7 @@ export const getAllMembers = async () => {
 // READ - ID'ye göre üye getir (grup bilgisiyle)
 export const getMemberById = async (id) => {
     console.log("getMemberById service çalıştı, ID:", id);
-    
+
     try {
         const member = await Member.findByPk(id, {
             include: [{
@@ -127,13 +144,13 @@ export const getMemberById = async (id) => {
                 attributes: ['id', 'group_name', 'description', 'isActive']
             }]
         });
-        
+
         if (!member) {
             const error = new Error('Üye bulunamadı');
             error.statusCode = 404;
             throw error;
         }
-        
+
         return {
             id: member.id,
             fullName: member.fullName,
@@ -168,16 +185,16 @@ export const getMemberById = async (id) => {
 export const updateMember = async (id, updateData) => {
     console.log("updateMember service çalıştı, ID:", id);
     console.log("Güncellenecek veriler:", updateData);
-    
+
     try {
         const member = await Member.findByPk(id);
-        
+
         if (!member) {
             const error = new Error('Güncellenecek üye bulunamadı');
             error.statusCode = 404;
             throw error;
         }
-        
+
         const {
             fullName,
             tcNumber,
@@ -192,7 +209,7 @@ export const updateMember = async (id, updateData) => {
             charterApproval,
             kvkkApproval
         } = updateData;
-        
+
         // Eğer grup değiştiriliyorsa, yeni grup var mı kontrol et
         if (group_id && group_id !== member.group_id) {
             const group = await Group.findByPk(group_id);
@@ -207,13 +224,13 @@ export const updateMember = async (id, updateData) => {
                 throw error;
             }
         }
-        
+
         // Boolean değerleri doğru şekilde parse et
-        const isCharterApproved = charterApproval !== undefined ? 
+        const isCharterApproved = charterApproval !== undefined ?
             (charterApproval === 'true' || charterApproval === true) : member.charterApproval;
-        const isKvkkApproved = kvkkApproval !== undefined ? 
+        const isKvkkApproved = kvkkApproval !== undefined ?
             (kvkkApproval === 'true' || kvkkApproval === true) : member.kvkkApproval;
-        
+
         const updatedMember = await member.update({
             fullName: fullName || member.fullName,
             tcNumber: tcNumber || member.tcNumber,
@@ -237,7 +254,7 @@ export const updateMember = async (id, updateData) => {
                 attributes: ['id', 'group_name']
             }]
         });
-        
+
         console.log("Üye güncellendi:", updatedMember);
         return {
             id: memberWithGroup.id,
@@ -259,7 +276,7 @@ export const updateMember = async (id, updateData) => {
 // DELETE - Üye kalıcı olarak sil (aynı)
 export const deleteMember = async (id) => {
     console.log("deleteMember service çalıştı, ID:", id);
-    
+
     try {
         const member = await Member.findByPk(id, {
             include: [{
@@ -268,16 +285,16 @@ export const deleteMember = async (id) => {
                 attributes: ['group_name']
             }]
         });
-        
+
         if (!member) {
             const error = new Error('Silinecek üye bulunamadı');
             error.statusCode = 404;
             throw error;
         }
-        
+
         // Üyeyi kalıcı olarak sil
         await member.destroy();
-        
+
         console.log("Üye kalıcı olarak silindi, ID:", id);
         return {
             id: parseInt(id),
@@ -295,10 +312,10 @@ export const deleteMember = async (id) => {
 // SEARCH - Üyeleri arama (grup bilgisiyle)
 export const searchMembers = async (searchTerm) => {
     console.log("searchMembers service çalıştı, searchTerm:", searchTerm);
-    
+
     try {
         const { Op } = await import('sequelize');
-        
+
         const members = await Member.findAll({
             where: {
                 [Op.or]: [
@@ -313,7 +330,7 @@ export const searchMembers = async (searchTerm) => {
             }],
             order: [['createdAt', 'DESC']]
         });
-        
+
         return members.map(member => ({
             id: member.id,
             fullName: member.fullName,

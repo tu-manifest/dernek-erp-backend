@@ -15,6 +15,7 @@ import settingRoutes from './setting.routes.js';
 import activityLogRoutes from './activityLog.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import budgetPlanRoutes from './budgetPlan.routes.js';
+import expenseRoutes from './expense.routes.js';
 
 const router = express.Router();
 
@@ -34,6 +35,7 @@ router.use('/settings', settingRoutes);
 router.use('/activity-logs', activityLogRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/budget', budgetPlanRoutes);
+router.use('/expenses', expenseRoutes);
 
 export default router;
 
