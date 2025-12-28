@@ -1,8 +1,12 @@
 // src/routes/campaign.routes.js
 import express from 'express';
 import * as campaignController from '../controllers/campaign.controller.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+// Tüm campaign route'ları için authentication gerekli
+router.use(authenticate);
 
 // CRUD işlemleri
 router.post('/', campaignController.createCampaign);

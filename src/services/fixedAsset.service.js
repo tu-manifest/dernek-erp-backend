@@ -4,6 +4,22 @@ import { ASSET_STATUS, ASSET_CLASSES, ASSET_SUB_CLASSES } from '../models/fixedA
 
 class FixedAssetService {
     /**
+     * Tarih alanlarını temizle (boş string'leri null'a dönüştür)
+     */
+    sanitizeDateFields(data) {
+        const dateFields = ['acquisitionDate', 'depreciationStartDate', 'warrantyEndDate'];
+        const sanitized = { ...data };
+
+        dateFields.forEach(field => {
+            if (sanitized[field] === '' || sanitized[field] === 'Invalid date') {
+                sanitized[field] = null;
+            }
+        });
+
+        return sanitized;
+    }
+
+    /**
      * Birikmiş amortisman hesapla
      */
     calculateDepreciation(asset) {
@@ -63,17 +79,20 @@ class FixedAssetService {
     }
 
     async createAsset(assetData) {
+        // Tarih alanlarını temizle
+        const sanitizedData = this.sanitizeDateFields(assetData);
+
         // Alt sınıf doğrulaması
-        if (assetData.assetSubClass && assetData.assetClass) {
-            const validSubClasses = ASSET_SUB_CLASSES[assetData.assetClass] || [];
-            if (!validSubClasses.includes(assetData.assetSubClass)) {
+        if (sanitizedData.assetSubClass && sanitizedData.assetClass) {
+            const validSubClasses = ASSET_SUB_CLASSES[sanitizedData.assetClass] || [];
+            if (!validSubClasses.includes(sanitizedData.assetSubClass)) {
                 const error = new Error(`Geçersiz alt sınıf. Geçerli seçenekler: ${validSubClasses.join(', ')}`);
                 error.statusCode = 400;
                 throw error;
             }
         }
 
-        const asset = await db.FixedAsset.create(assetData);
+        const asset = await db.FixedAsset.create(sanitizedData);
         return asset;
     }
 
@@ -90,18 +109,21 @@ class FixedAssetService {
     async updateAsset(id, assetData) {
         const asset = await this.getAssetById(id);
 
+        // Tarih alanlarını temizle
+        const sanitizedData = this.sanitizeDateFields(assetData);
+
         // Alt sınıf doğrulaması
-        const assetClass = assetData.assetClass || asset.assetClass;
-        if (assetData.assetSubClass) {
+        const assetClass = sanitizedData.assetClass || asset.assetClass;
+        if (sanitizedData.assetSubClass) {
             const validSubClasses = ASSET_SUB_CLASSES[assetClass] || [];
-            if (!validSubClasses.includes(assetData.assetSubClass)) {
+            if (!validSubClasses.includes(sanitizedData.assetSubClass)) {
                 const error = new Error(`Geçersiz alt sınıf. Geçerli seçenekler: ${validSubClasses.join(', ')}`);
                 error.statusCode = 400;
                 throw error;
             }
         }
 
-        await asset.update(assetData);
+        await asset.update(sanitizedData);
         return asset;
     }
 

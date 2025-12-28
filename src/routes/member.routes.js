@@ -1,14 +1,18 @@
 import express from 'express';
-import { 
-    addNewMember, 
-    getAllMembers, 
-    getMemberById, 
-    updateMember, 
+import {
+    addNewMember,
+    getAllMembers,
+    getMemberById,
+    updateMember,
     deleteMember,
-    searchMembers 
+    searchMembers
 } from '../controllers/member.controller.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+// Tüm member route'ları için authentication gerekli
+router.use(authenticate);
 
 // CREATE - Yeni üye oluştur
 router.post("/", addNewMember);

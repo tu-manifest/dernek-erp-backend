@@ -43,6 +43,18 @@ export const recordCollection = asyncHandler(async (req, res) => {
   }
 
   const updatedDebt = await financeService.recordCollection(debtId, amountPaid, paymentMethod, receiptNumber, collectionDate, notes);
+
+  // Aktivite logu oluştur
+  await ActivityLogService.createLog({
+    action: 'CREATE',
+    entityType: 'Collection',
+    entityId: debtId,
+    entityName: `${amountPaid} TL tahsilat - ${paymentMethod}`,
+    adminId: req.user?.id,
+    adminName: req.user?.fullName || 'Sistem',
+    ipAddress: req.ip
+  });
+
   return res.status(HTTP_STATUS.OK).json({ success: true, message: 'Tahsilat başarıyla kaydedildi.', data: updatedDebt });
 });
 
@@ -89,6 +101,18 @@ export const bulkPayment = asyncHandler(async (req, res) => {
   const result = await financeService.recordBulkPayment(
     debtorId, debtorType, totalAmount, paymentMethod, receiptNumber, collectionDate, notes
   );
+
+  // Aktivite logu oluştur
+  await ActivityLogService.createLog({
+    action: 'CREATE',
+    entityType: 'Collection',
+    entityId: debtorId,
+    entityName: `${totalAmount} TL toplu tahsilat - ${paymentMethod}`,
+    adminId: req.user?.id,
+    adminName: req.user?.fullName || 'Sistem',
+    ipAddress: req.ip
+  });
+
   return res.status(HTTP_STATUS.OK).json({ success: true, message: 'Ödeme başarıyla dağıtıldı.', data: result });
 });
 

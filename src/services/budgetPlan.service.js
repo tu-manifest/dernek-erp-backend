@@ -93,8 +93,11 @@ export const saveBudgetPlan = async (year, items) => {
  * Belirli bir yılın bütçe planını getirir
  */
 export const getBudgetPlan = async (year) => {
+    // Year'ı integer'a parse et
+    const yearInt = parseInt(year);
+
     const items = await db.BudgetPlanItem.findAll({
-        where: { year },
+        where: { year: yearInt },
         order: [['type', 'ASC'], ['category', 'ASC'], ['itemName', 'ASC']]
     });
 
@@ -107,10 +110,15 @@ export const getBudgetPlan = async (year) => {
     const totalExpense = expenseItems.reduce((sum, item) => sum + parseFloat(item.amount), 0);
     const balance = totalIncome - totalExpense;
 
+    // Type mapping (backend -> frontend)
+    const mapTypeToTurkish = (type) => {
+        return type === 'INCOME' ? 'gelir' : 'gider';
+    };
+
     // Kategorilere göre grupla
-    const groupByCategory = (items) => {
+    const groupByCategory = (itemsList, type) => {
         const grouped = {};
-        for (const item of items) {
+        for (const item of itemsList) {
             if (!grouped[item.category]) {
                 grouped[item.category] = {
                     category: item.category,
@@ -121,22 +129,37 @@ export const getBudgetPlan = async (year) => {
             grouped[item.category].items.push({
                 id: item.id,
                 itemName: item.itemName,
+                item: item.itemName, // Frontend uyumu için
                 amount: parseFloat(item.amount),
-                description: item.description
+                description: item.description,
+                type: mapTypeToTurkish(item.type),
+                category: item.category
             });
             grouped[item.category].subtotal += parseFloat(item.amount);
         }
         return Object.values(grouped);
     };
 
+    // Düz liste formatı (frontend için)
+    const flatItems = items.map(item => ({
+        id: item.id,
+        type: mapTypeToTurkish(item.type),
+        category: item.category,
+        item: item.itemName,
+        itemName: item.itemName,
+        amount: parseFloat(item.amount),
+        description: item.description
+    }));
+
     return {
-        year,
+        year: yearInt,
+        items: flatItems, // Frontend için düz liste
         income: {
-            categories: groupByCategory(incomeItems),
+            categories: groupByCategory(incomeItems, 'INCOME'),
             total: totalIncome
         },
         expense: {
-            categories: groupByCategory(expenseItems),
+            categories: groupByCategory(expenseItems, 'EXPENSE'),
             total: totalExpense
         },
         summary: {

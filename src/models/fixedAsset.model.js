@@ -1,45 +1,45 @@
 // src/models/fixedAsset.model.js
 import { DataTypes } from 'sequelize';
 
-// Varlık sınıfları
+// Varlık sınıfları (hesap kodları ile)
 export const ASSET_CLASSES = {
-    BINALAR: 'Binalar',
-    TESIS_MAKINE: 'Tesis Makine ve Cihazlar',
-    TASITLAR: 'Taşıtlar',
-    DEMIRBASLAR: 'Demirbaşlar',
-    OZEL_MALIYETLER: 'Özel Maliyetler',
-    MADDI_OLMAYAN: 'Maddi Olmayan Duran Varlıklar'
+    BINALAR: 'Binalar (252)',
+    TESIS_MAKINE: 'Tesis Makine ve Cihazlar (253)',
+    TASITLAR: 'Taşıtlar (254)',
+    DEMIRBASLAR: 'Demirbaşlar (255)',
+    OZEL_MALIYETLER: 'Özel Maliyetler (264)',
+    MADDI_OLMAYAN: 'Maddi Olmayan Duran Varlıklar (260)'
 };
 
 // Alt sınıflar (ana sınıfa göre)
 export const ASSET_SUB_CLASSES = {
     [ASSET_CLASSES.BINALAR]: [
-        'Beton çelik konstrüksiyon binalar',
-        'Yarı kagir ve ahşap binalar',
-        'Diğer binalar (Prefabrik vb.)'
+        'Beton, Çelik Konstrüksiyon Binalar',
+        'Yarı Kagir ve Ahşap Binalar',
+        'Diğer Binalar (Prefabrik vb.)'
     ],
     [ASSET_CLASSES.TESIS_MAKINE]: [
-        'Jeneratör kompres ve pompalar',
-        'Güvenlik alarm ve yangın sistemleri',
-        'Klima ve havalandırma sistemleri'
+        'Jeneratör, Kompresör ve Pompalar',
+        'Güvenlik, Alarm ve Yangın Sistemleri',
+        'Klima ve Havalandırma Sistemleri'
     ],
     [ASSET_CLASSES.TASITLAR]: [
-        'Binek otomobiller',
-        'Minibüs otobüsler'
+        'Binek Otomobiller',
+        'Minibüsler, Otobüsler'
     ],
     [ASSET_CLASSES.DEMIRBASLAR]: [
-        'Mobilya ve dekorasyon malzemeleri',
-        'Bilgisayar yazıcı sunucu',
-        'Ses kamera donanımları',
-        'Kitaplıklar arşivleme malzemeleri',
-        'Eğitim materyalleri simülatörler'
+        'Mobilya ve Dekorasyon Malzemeleri',
+        'Bilgisayar, Yazıcı, Sunucu',
+        'Ses ve Kamera Donanımları',
+        'Kitaplıklar, Arşivleme Malzemeleri',
+        'Eğitim Materyalleri, Simülatörler'
     ],
     [ASSET_CLASSES.OZEL_MALIYETLER]: [
-        'Kiralanan yerdeki tadilat giderleri'
+        'Kiralanan Yerdeki Tadilat Giderleri'
     ],
     [ASSET_CLASSES.MADDI_OLMAYAN]: [
-        'Lisans telif hakkı',
-        'Web sitesi kurulum giderleri'
+        'Lisans, Telif Hakkı',
+        'Web Sitesi Kurulum Giderleri'
     ]
 };
 
@@ -47,7 +47,7 @@ export const ASSET_SUB_CLASSES = {
 export const ASSET_STATUS = {
     KULANIMDA: 'Kullanımda',
     ARIZALI: 'Arızalı',
-    HURDAYA_AYRILMIS: 'Hurdaya Ayrılmış'
+    HURDAYA_AYRILMIS: 'Hurdaya Çekilmiş'
 };
 
 export default (sequelize) => {

@@ -1,7 +1,11 @@
 import express from 'express';
 import budgetPlanController from '../controllers/budgetPlan.controller.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+// Tüm budget route'ları için authentication gerekli
+router.use(authenticate);
 
 // Mevcut bütçe yıllarını getir
 router.get('/years', budgetPlanController.getBudgetYears);

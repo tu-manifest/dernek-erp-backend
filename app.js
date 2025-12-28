@@ -7,6 +7,7 @@ import models from './src/models/index.js';
 import { initializeClient, setSocketIO } from './src/utils/whatsappClient.js';
 import { errorHandler, notFoundHandler } from './src/middlewares/errorHandler.js';
 import { seedAdmins } from './src/seeders/adminSeeder.js';
+import { seedData } from './src/seeders/dataSeeder.js';
 
 const app = express();
 
@@ -58,8 +59,9 @@ sequelize.authenticate()
     // 9️⃣ Varsayılan admin kullanıcılarını oluştur (sync başarılı veya başarısız olsa da çalışır)
     try {
       await seedAdmins();
+      await seedData();
     } catch (seedErr) {
-      console.error('❌ Admin seed hatası:', seedErr.message);
+      console.error('❌ Seed hatası:', seedErr.message);
     }
   });
 

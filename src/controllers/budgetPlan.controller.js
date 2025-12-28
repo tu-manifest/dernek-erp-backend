@@ -4,6 +4,17 @@ import { AppError } from '../middlewares/errorHandler.js';
 import { HTTP_STATUS } from '../constants/errorMessages.js';
 import * as ActivityLogService from '../services/activityLog.service.js';
 
+// Frontend field mapping helper
+const mapTypeToEnglish = (type) => {
+    const typeMap = {
+        'gelir': 'INCOME',
+        'gider': 'EXPENSE',
+        'INCOME': 'INCOME',
+        'EXPENSE': 'EXPENSE'
+    };
+    return typeMap[type?.toLowerCase()] || typeMap[type] || type;
+};
+
 /**
  * Yeni Plan Oluştur
  * POST /api/budget/new
@@ -16,17 +27,27 @@ export const createNewPlan = asyncHandler(async (req, res) => {
         throw new AppError('Yıl ve bütçe kalemleri gereklidir.', HTTP_STATUS.BAD_REQUEST);
     }
 
+    // Frontend'den gelen verileri backend formatına dönüştür
+    const normalizedItems = items.map(item => ({
+        type: mapTypeToEnglish(item.type),
+        category: item.category,
+        itemName: item.itemName || item.item, // 'item' veya 'itemName' kabul et
+        amount: item.amount,
+        currency: item.currency,
+        description: item.description
+    }));
+
     // Items doğrulama
-    for (const item of items) {
+    for (const item of normalizedItems) {
         if (!item.type || !item.category || !item.itemName) {
-            throw new AppError('Her kalem için tip, kategori ve kalem adı gereklidir.', HTTP_STATUS.BAD_REQUEST);
+            throw new AppError('Her kalem için tip, kategori ve kalem adı (item/itemName) gereklidir.', HTTP_STATUS.BAD_REQUEST);
         }
         if (!['INCOME', 'EXPENSE'].includes(item.type)) {
-            throw new AppError('Tip INCOME veya EXPENSE olmalıdır.', HTTP_STATUS.BAD_REQUEST);
+            throw new AppError('Tip gelir/gider veya INCOME/EXPENSE olmalıdır.', HTTP_STATUS.BAD_REQUEST);
         }
     }
 
-    const createdItems = await budgetPlanService.createBudgetPlan(year, items);
+    const createdItems = await budgetPlanService.createBudgetPlan(year, normalizedItems);
 
     // Aktivite logu
     await ActivityLogService.createLog({
@@ -51,6 +72,7 @@ export const createNewPlan = asyncHandler(async (req, res) => {
  * PUT /api/budget/save
  * Mevcut planı günceller veya yoksa oluşturur
  */
+
 export const savePlan = asyncHandler(async (req, res) => {
     const { year, items } = req.body;
 
@@ -58,7 +80,27 @@ export const savePlan = asyncHandler(async (req, res) => {
         throw new AppError('Yıl ve bütçe kalemleri gereklidir.', HTTP_STATUS.BAD_REQUEST);
     }
 
-    const result = await budgetPlanService.saveBudgetPlan(year, items);
+    // Frontend'den gelen verileri backend formatına dönüştür
+    const normalizedItems = items.map(item => ({
+        type: mapTypeToEnglish(item.type),
+        category: item.category,
+        itemName: item.itemName || item.item, // 'item' veya 'itemName' kabul et
+        amount: item.amount,
+        currency: item.currency,
+        description: item.description
+    }));
+
+    // Items doğrulama
+    for (const item of normalizedItems) {
+        if (!item.type || !item.category || !item.itemName) {
+            throw new AppError('Her kalem için tip, kategori ve kalem adı (item/itemName) gereklidir.', HTTP_STATUS.BAD_REQUEST);
+        }
+        if (!['INCOME', 'EXPENSE'].includes(item.type)) {
+            throw new AppError('Tip gelir/gider veya INCOME/EXPENSE olmalıdır.', HTTP_STATUS.BAD_REQUEST);
+        }
+    }
+
+    const result = await budgetPlanService.saveBudgetPlan(year, normalizedItems);
 
     // Aktivite logu
     await ActivityLogService.createLog({

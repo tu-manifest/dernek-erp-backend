@@ -1,8 +1,12 @@
 
 import express from 'express';
 import financeController from '../controllers/finance.controller.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+// Tüm finance route'ları için authentication gerekli
+router.use(authenticate);
 
 // Borç Girişi Ekranı (Üye/Dış Borçlu ekleme)
 router.post('/debt', financeController.addDebt);
