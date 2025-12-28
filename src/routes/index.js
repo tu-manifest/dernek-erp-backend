@@ -16,6 +16,7 @@ import activityLogRoutes from './activityLog.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import budgetPlanRoutes from './budgetPlan.routes.js';
 import expenseRoutes from './expense.routes.js';
+import financialReportRoutes from './financialReport.routes.js';
 
 const router = express.Router();
 
@@ -36,6 +37,7 @@ router.use('/activity-logs', activityLogRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/budget', budgetPlanRoutes);
 router.use('/expenses', expenseRoutes);
+router.use('/financial-report', financialReportRoutes);
 
 export default router;
 
