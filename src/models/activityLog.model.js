@@ -41,8 +41,7 @@ export default (sequelize) => {
         // İşlemi yapan admin adı (denormalized - hızlı sorgular için)
         adminName: {
             type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: 'Sistem',
+            allowNull: true, // Seed işlemleri gibi durumlarda null olabilir
         },
 
         // Değişiklik detayları (eski ve yeni değerler)

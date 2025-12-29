@@ -23,7 +23,7 @@ export const createLog = async (data) => {
             entityId: data.entityId,
             entityName: data.entityName,
             adminId: data.adminId,
-            adminName: data.adminName || 'Sistem',
+            adminName: data.adminName,
             details: data.details,
             ipAddress: data.ipAddress,
         });

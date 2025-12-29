@@ -48,7 +48,7 @@ const defaultMembers = [
         address: 'Bağdat Caddesi No:120, Kadıköy, İstanbul',
         duesAmount: 500.00,
         duesFrequency: 'annual',
-        paymentStatus: 'paid',
+        paymentStatus: 'pending',
     },
     {
         fullName: 'Zeynep Çelik',
@@ -69,7 +69,7 @@ const defaultCampaigns = [
         name: 'Ramazan Yardım Paketi Kampanyası',
         type: 'Sosyal Destek',
         targetAmount: 50000.00,
-        collectedAmount: 12500.00,
+        collectedAmount: 0.00,
         description: 'İhtiyaç sahibi ailelere Ramazan ayında gıda yardımı ulaştırma kampanyası. Hedefimiz 500 aileye ulaşmak.',
         duration: '3 ay',
         iban: 'TR120001001234567890123456',
@@ -81,7 +81,7 @@ const defaultCampaigns = [
         name: 'Eğitim Bursu Fonu',
         type: 'Eğitim',
         targetAmount: 100000.00,
-        collectedAmount: 35000.00,
+        collectedAmount: 0.00,
         description: 'Başarılı ve ihtiyaç sahibi öğrencilere burs desteği sağlama fonu. Üniversite ve lise öğrencileri için.',
         duration: '12 ay',
         iban: 'TR120001001234567890123457',
@@ -323,7 +323,7 @@ const createActivityLog = async (action, entityType, entityId, entityName, detai
             entityId,
             entityName,
             adminId: null,
-            adminName: 'Sistem',
+            adminName: 'Seed Yöneticisi',
             details,
             ipAddress: '127.0.0.1',
         });
@@ -543,6 +543,84 @@ const seedDebts = async (members) => {
 };
 
 /**
+ * Üye Aidat Borcu seed
+ * Aylık aidat durumu beklemede olan üyeler için otomatik borç oluşturur
+ */
+const seedMemberDuesDebts = async (members) => {
+    console.log('🌱 Üye aidat borçları seed işlemi başlatılıyor...');
+    const Debt = db.Debt;
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (const member of members) {
+        try {
+            // Sadece paymentStatus'u 'pending' olan üyeler için borç oluştur
+            if (member.paymentStatus !== 'pending') {
+                continue;
+            }
+
+            // Aynı üye için aidat borcu kontrolü
+            const existingDuesDebt = await Debt.findOne({
+                where: {
+                    memberId: member.id,
+                    debtType: 'Aidat',
+                }
+            });
+
+            if (existingDuesDebt) {
+                console.log(`   ⏭️  ${member.fullName} için aidat borcu zaten mevcut, atlanıyor...`);
+                skippedCount++;
+                continue;
+            }
+
+            // Due date hesapla (duesFrequency'e göre)
+            const today = new Date();
+            let dueDate;
+            switch (member.duesFrequency) {
+                case 'monthly':
+                    dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 15);
+                    break;
+                case 'quarterly':
+                    dueDate = new Date(today.getFullYear(), today.getMonth() + 3, 15);
+                    break;
+                case 'annual':
+                    dueDate = new Date(today.getFullYear() + 1, 0, 15);
+                    break;
+                default:
+                    dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 15);
+            }
+
+            const frequencyText = {
+                'monthly': 'Aylık',
+                'quarterly': 'Üç Aylık',
+                'annual': 'Yıllık'
+            };
+
+            const newDebt = await Debt.create({
+                memberId: member.id,
+                externalDebtorId: null,
+                debtorType: 'MEMBER',
+                debtType: 'Aidat',
+                amount: member.duesAmount,
+                currency: 'TL',
+                dueDate: dueDate.toISOString().split('T')[0],
+                description: `${frequencyText[member.duesFrequency] || 'Aylık'} üyelik aidatı`,
+                status: 'Pending',
+                collectedAmount: 0,
+            });
+
+            console.log(`   ✅ ${member.fullName} için ${member.duesAmount} TL aidat borcu oluşturuldu`);
+            await createActivityLog('CREATE', 'Debt', newDebt.id, `${member.fullName} - Aidat`);
+            createdCount++;
+        } catch (error) {
+            console.error(`   ❌ ${member.fullName} için aidat borcu oluşturulurken hata:`, error.message);
+        }
+    }
+
+    console.log(`🌱 Üye aidat borçları seed tamamlandı: ${createdCount} yeni, ${skippedCount} atlandı`);
+};
+
+/**
  * Dış Bağışçı seed
  */
 const seedDonors = async () => {
@@ -602,7 +680,10 @@ export const seedData = async () => {
         // 6. Borçları oluştur
         await seedDebts(members);
 
-        // 7. Dış bağışçıları oluştur
+        // 7. Üye aidat borçlarını oluştur (beklemede olanlar için)
+        await seedMemberDuesDebts(members);
+
+        // 8. Dış bağışçıları oluştur
         await seedDonors();
 
         console.log('\n========================================');

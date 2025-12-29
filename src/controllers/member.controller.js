@@ -13,7 +13,7 @@ export const addNewMember = async (req, res, next) => {
             entityId: newMember.id,
             entityName: newMember.fullName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -82,7 +82,7 @@ export const updateMember = async (req, res, next) => {
             entityId: updatedMember.id,
             entityName: updatedMember.fullName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -122,7 +122,7 @@ export const deleteMember = async (req, res, next) => {
             entityId: result.id,
             entityName: result.fullName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 

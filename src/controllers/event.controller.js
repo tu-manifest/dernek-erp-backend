@@ -16,7 +16,7 @@ export const createEvent = async (req, res, next) => {
             entityId: newEvent.id,
             entityName: newEvent.eventName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -112,7 +112,7 @@ export const updateEvent = async (req, res, next) => {
             entityId: updatedEvent.id,
             entityName: updatedEvent.eventName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -159,7 +159,7 @@ export const deleteEvent = async (req, res, next) => {
             entityId: parseInt(req.params.id),
             entityName: eventName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 

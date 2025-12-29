@@ -16,7 +16,7 @@ export const createMeeting = async (req, res, next) => {
             entityId: newMeeting.id,
             entityName: newMeeting.title,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip,
         });
 
@@ -128,7 +128,7 @@ export const updateMeeting = async (req, res, next) => {
             entityId: updatedMeeting.id,
             entityName: updatedMeeting.title,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip,
         });
 
@@ -175,7 +175,7 @@ export const deleteMeeting = async (req, res, next) => {
             entityId: parseInt(req.params.id),
             entityName: meetingTitle,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip,
         });
 
@@ -219,7 +219,7 @@ export const updateMeetingStatus = async (req, res, next) => {
             entityId: updatedMeeting.id,
             entityName: `${updatedMeeting.title} - Durum: ${status}`,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip,
         });
 

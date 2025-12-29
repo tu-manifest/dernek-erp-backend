@@ -17,7 +17,7 @@ export const createCampaign = async (req, res, next) => {
             entityId: campaign.id,
             entityName: campaign.name,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -97,7 +97,7 @@ export const updateCampaign = async (req, res, next) => {
             entityId: campaign.id,
             entityName: campaign.name,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 
@@ -144,7 +144,7 @@ export const deleteCampaign = async (req, res, next) => {
             entityId: parseInt(req.params.id),
             entityName: campaignName,
             adminId: req.user?.id,
-            adminName: req.user?.fullName || 'Sistem',
+            adminName: req.user?.fullName,
             ipAddress: req.ip
         });
 

@@ -56,7 +56,7 @@ export const createNewPlan = asyncHandler(async (req, res) => {
         entityId: year,
         entityName: `${year} Yılı Bütçe Planı`,
         adminId: req.user?.id,
-        adminName: req.user?.fullName || 'Sistem',
+        adminName: req.user?.fullName,
         ipAddress: req.ip
     });
 
@@ -109,7 +109,7 @@ export const savePlan = asyncHandler(async (req, res) => {
         entityId: year,
         entityName: `${year} Yılı Bütçe Planı`,
         adminId: req.user?.id,
-        adminName: req.user?.fullName || 'Sistem',
+        adminName: req.user?.fullName,
         ipAddress: req.ip
     });
 
@@ -181,7 +181,7 @@ export const deleteBudgetPlan = asyncHandler(async (req, res) => {
         entityId: yearInt,
         entityName: `${yearInt} Yılı Bütçe Planı`,
         adminId: req.user?.id,
-        adminName: req.user?.fullName || 'Sistem',
+        adminName: req.user?.fullName,
         ipAddress: req.ip
     });
 

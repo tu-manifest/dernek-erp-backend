@@ -10,7 +10,7 @@ class ExpenseController {
         try {
             const adminInfo = {
                 adminId: req.user?.id,
-                adminName: req.user?.name || 'Sistem',
+                adminName: req.user?.fullName,
                 ipAddress: req.ip
             };
 
@@ -79,7 +79,7 @@ class ExpenseController {
         try {
             const adminInfo = {
                 adminId: req.user?.id,
-                adminName: req.user?.name || 'Sistem',
+                adminName: req.user?.fullName,
                 ipAddress: req.ip
             };
 
@@ -106,7 +106,7 @@ class ExpenseController {
         try {
             const adminInfo = {
                 adminId: req.user?.id,
-                adminName: req.user?.name || 'Sistem',
+                adminName: req.user?.fullName,
                 ipAddress: req.ip
             };
 

@@ -24,7 +24,7 @@ export const addDebt = asyncHandler(async (req, res) => {
     entityId: debt.id,
     entityName: `${debtType} - ${amount} ${currency}`,
     adminId: req.user?.id,
-    adminName: req.user?.fullName || 'Sistem',
+    adminName: req.user?.fullName,
     ipAddress: req.ip
   });
 
@@ -51,7 +51,7 @@ export const recordCollection = asyncHandler(async (req, res) => {
     entityId: debtId,
     entityName: `${amountPaid} TL tahsilat - ${paymentMethod}`,
     adminId: req.user?.id,
-    adminName: req.user?.fullName || 'Sistem',
+    adminName: req.user?.fullName,
     ipAddress: req.ip
   });
 
@@ -109,7 +109,7 @@ export const bulkPayment = asyncHandler(async (req, res) => {
     entityId: debtorId,
     entityName: `${totalAmount} TL toplu tahsilat - ${paymentMethod}`,
     adminId: req.user?.id,
-    adminName: req.user?.fullName || 'Sistem',
+    adminName: req.user?.fullName,
     ipAddress: req.ip
   });
 
@@ -146,7 +146,7 @@ export const updateDebt = asyncHandler(async (req, res) => {
     entityId: parseInt(id),
     entityName: `${updatedDebt.debtType} - ${updatedDebt.amount} ${updatedDebt.currency}`,
     adminId: req.user?.id,
-    adminName: req.user?.fullName || 'Sistem',
+    adminName: req.user?.fullName,
     ipAddress: req.ip
   });
 
@@ -169,7 +169,7 @@ export const deleteDebt = asyncHandler(async (req, res) => {
     entityId: parseInt(id),
     entityName: `Borç #${id}`,
     adminId: req.user?.id,
-    adminName: req.user?.fullName || 'Sistem',
+    adminName: req.user?.fullName,
     ipAddress: req.ip
   });
 
